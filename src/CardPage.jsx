@@ -14,12 +14,12 @@ export const DEMO_CARD = {
   created_at: '2026-10-12', activated_at: '2026-10-12', first_visit_at: '2026-10-12',
   owner: {
     display_name: 'Narendra', username: '', location: 'Indonesia', joined_at: '2026-10-12',
-    headline: 'Founder & Product Builder', company: 'Cardora Studio',
+    headline: 'Founder & Product Builder', company: 'Dhiraya Studio',
     public_email: 'halo@example.com', public_phone: '',
     bio: 'Builder, kreator, dan kolektor. Senang membuat hal digital menjadi nyata.'
   },
   experiences: [
-    { title: 'Founder', org: 'Cardora Studio', start_year: 2025, end_year: null, description: 'Membangun identitas digital berbasis kartu NFC.' },
+    { title: 'Founder', org: 'Dhiraya Studio', start_year: 2025, end_year: null, description: 'Membangun identitas digital berbasis kartu NFC.' },
     { title: 'Product Designer', org: 'Studio Kreatif', start_year: 2022, end_year: 2025, description: 'Merancang produk digital untuk brand lokal.' }
   ],
   socials: [
@@ -45,7 +45,7 @@ function downloadVcf(owner, name, code) {
   if (owner?.public_phone) lines.push('TEL;TYPE=CELL:' + esc(owner.public_phone));
   if (owner?.public_email) lines.push('EMAIL:' + esc(owner.public_email));
   if (safeUrl(owner?.website_url)) lines.push('URL:' + owner.website_url);
-  lines.push('NOTE:Kartu Cardora ' + esc(code), 'END:VCARD');
+  lines.push('NOTE:Kartu Dhiraya ' + esc(code), 'END:VCARD');
   const blob = new Blob([lines.join('\r\n')], { type: 'text/vcard' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -129,7 +129,7 @@ export const HoloCard = forwardRef(function HoloCard({ view, r, art, accent, st,
   const onLeave = () => { if (!mode3d) { const c = s.current; c.target = Math.round(c.y / 180) * 180; kick(); } };
 
   const owner = view.owner;
-  const cardName = view.display_name || owner?.display_name || 'Cardora';
+  const cardName = view.display_name || owner?.display_name || 'Dhiraya';
   const sub = owner?.headline || view.title || '';
   const layout = st.layout || 'classic';
   const bg = st.bg || 'art';
@@ -150,7 +150,7 @@ export const HoloCard = forwardRef(function HoloCard({ view, r, art, accent, st,
         <div className={`hc-face hc-front fl-${layout}`}>
           <div className="hc-bg" style={frontBg} />
           {layout === 'bold' && <div className="hc-watermark">{String(view.level).padStart(2, '0')}</div>}
-          <div className="hc-top"><span>✦ CARDORA</span><span className="rarity-chip">{view.rarity}</span></div>
+          <div className="hc-top"><span>✦ DHIRAYA</span><span className="rarity-chip">{view.rarity}</span></div>
           <div className="hc-bottom">
             <b>{cardName}</b>
             {sub && <em>{sub}</em>}
@@ -163,7 +163,7 @@ export const HoloCard = forwardRef(function HoloCard({ view, r, art, accent, st,
           <div className="hc-back-pattern" />
           <div className="hc-back-inner">
             <Sparkles size={22} />
-            <strong>CARDORA</strong>
+            <strong>DHIRAYA</strong>
             {qr ? <img className="hc-qr" src={qr} alt={'QR ' + view.code} draggable="false" /> : <span className="nfc-glyph">◉</span>}
             <b>{view.code}</b>
             <span>KOLEKSI #{String(view.number).padStart(3, '0')} · LV {view.level}</span>
@@ -240,7 +240,7 @@ export default function CardPage({ view, loading, code, go, notify }) {
   const st = view.style || {};
   const accent = /^#[0-9a-f]{6}$/i.test(st.accent || '') ? st.accent : r.color;
   const owner = view.owner;
-  const cardName = view.display_name || owner?.display_name || 'Cardora';
+  const cardName = view.display_name || owner?.display_name || 'Dhiraya';
   const art = safeUrl(view.front_image) ? view.front_image : r.image;
   const pct = Math.min(100, Math.round((view.exp_into_level / Math.max(1, view.exp_per_level)) * 100));
   const socials = [...(view.socials || [])].filter(x => safeUrl(x.url));
@@ -253,7 +253,7 @@ export default function CardPage({ view, loading, code, go, notify }) {
   const share = async () => {
     const url = location.origin + '/c/' + view.code;
     try {
-      if (navigator.share) { await navigator.share({ title: cardName + ' · Cardora', url }); return; }
+      if (navigator.share) { await navigator.share({ title: cardName + ' · Dhiraya', url }); return; }
       await navigator.clipboard.writeText(url); notify('Tautan kartu disalin.');
     } catch { notify('Salin tautan dari address bar browser.'); }
   };
@@ -280,7 +280,7 @@ export default function CardPage({ view, loading, code, go, notify }) {
       <header className="cp-head">
         {owner && view.is_owner
           ? <button className="cp-pill" onClick={() => go('member')}><ChevronLeft size={15} /> Dashboard</button>
-          : <span className="cp-word">✦ cardora</span>}
+          : <span className="cp-word">✦ dhiraya</span>}
         <div className="cp-actions">
           <button className="cp-icon" onClick={() => setMode3d(true)} aria-label="Mode 3D" title="Mode 3D"><Rotate3D size={17} /></button>
           <button className="cp-icon" onClick={share} aria-label="Bagikan" title="Bagikan"><Share2 size={17} /></button>

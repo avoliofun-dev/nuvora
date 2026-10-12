@@ -1,1 +1,146 @@
-<!doctype html><html lang="id"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><meta name="theme-color" content="#07111b"/><meta name="description" content="Cardora — kartu digital, identitas, dan koleksi eksklusif."/><title>Cardora — Digital Identity & Collectibles</title><style>html,body{margin:0;background:#07111b;color:#edf2f7;font-family:DM Sans,system-ui,sans-serif}#boot-err{display:none;max-width:560px;margin:12vh auto;padding:0 22px}#boot-err pre{white-space:pre-wrap;background:#0d1a27;border:1px solid #203143;border-radius:10px;padding:12px;font-size:12px;color:#ff9aa8}</style></head><body><div id="root"></div><div id="boot-err"><h2>Halaman gagal dimuat</h2><p style="color:#93a3b5">Muat ulang halaman. Bila masih kosong, kirim pesan di bawah ini ke pengembang. Pastikan web dibuka lewat <code>npm run dev</code> atau situs yang sudah di-deploy, bukan dengan membuka file index.html langsung.</p><pre id="boot-msg"></pre></div><noscript><p style="padding:24px">Aktifkan JavaScript untuk membuka Cardora.</p></noscript><script>(function(){var m=[];function show(){var r=document.getElementById("root");if(r&&r.childNodes.length===0){document.getElementById("boot-err").style.display="block";document.getElementById("boot-msg").textContent=m.join("\n")||"Tidak ada error tercatat; skrip aplikasi mungkin gagal diunduh."}}addEventListener("error",function(e){m.push(String(e.message||e.error||"error")+(e.filename?" @ "+e.filename:""))});addEventListener("unhandledrejection",function(e){m.push("Promise: "+String(e.reason&&e.reason.message||e.reason))});setTimeout(show,4000)})()</script><script type="module" src="/src/main.jsx"></script></body></html>
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <meta name="theme-color" content="#07111b"/>
+  
+  <!-- Primary Meta Tags -->
+  <title>Dhiraya — Smart Digital Business Card &amp; Identity Platform</title>
+  <meta name="title" content="Dhiraya — Smart Digital Business Card &amp; Identity Platform"/>
+  <meta name="description" content="Dhiraya adalah platform kartu nama digital pintar berbasis NFC &amp; profil online interaktif. Bagikan kontak, portofolio, dan identitas profesionalmu hanya dengan satu sentuhan tap."/>
+  <meta name="keywords" content="dhiraya, kartu nama digital, smart business card, kartu nfc, digital identity, kartu profil interaktif, contactless networking, kartu pintar indonesia"/>
+  <meta name="author" content="Dhiraya Team"/>
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"/>
+  <link rel="canonical" href="https://dhiraya.com/"/>
+
+  <!-- Favicon & Mobile Icons -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+  <link rel="apple-touch-icon" href="/favicon.svg"/>
+
+  <!-- Open Graph / Facebook / WhatsApp -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:url" content="https://dhiraya.com/"/>
+  <meta property="og:site_name" content="Dhiraya"/>
+  <meta property="og:title" content="Dhiraya — Smart Digital Business Card &amp; Identity Platform"/>
+  <meta property="og:description" content="Tingkatkan cara Anda berjejaring dengan kartu NFC eksklusif dan profil digital yang hidup, dinamis, dan terus berkembang."/>
+  <meta property="og:image" content="/favicon.svg"/>
+  <meta property="og:locale" content="id_ID"/>
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:url" content="https://dhiraya.com/"/>
+  <meta name="twitter:title" content="Dhiraya — Smart Digital Business Card &amp; Identity Platform"/>
+  <meta name="twitter:description" content="Platform identitas digital modern: kartu fisik koleksi ber-chip NFC yang terhubung langsung dengan profil profesional Anda."/>
+  <meta name="twitter:image" content="/favicon.svg"/>
+
+  <!-- Google Font & Preconnect for SEO Core Web Vitals -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;0,9..40,800;1,9..40,400&display=swap" rel="stylesheet"/>
+
+  <!-- Schema.org JSON-LD Structured Data for Rich Search Results -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://dhiraya.com/#organization",
+        "name": "Dhiraya",
+        "url": "https://dhiraya.com",
+        "logo": "https://dhiraya.com/favicon.svg",
+        "description": "Platform smart digital identity & contactless business card."
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://dhiraya.com/#website",
+        "url": "https://dhiraya.com",
+        "name": "Dhiraya",
+        "publisher": {
+          "@id": "https://dhiraya.com/#organization"
+        },
+        "inLanguage": "id"
+      },
+      {
+        "@type": "Product",
+        "name": "Dhiraya Smart Card",
+        "description": "Kartu nama digital pintar berbasis NFC & QR code dengan profil interaktif dan analitik tap.",
+        "brand": {
+          "@type": "Brand",
+          "name": "Dhiraya"
+        },
+        "offers": {
+          "@type": "AggregateOffer",
+          "priceCurrency": "IDR",
+          "lowPrice": "150000",
+          "highPrice": "450000",
+          "offerCount": "5"
+        }
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    html, body {
+      margin: 0;
+      background: #07111b;
+      color: #edf2f7;
+      font-family: 'DM Sans', system-ui, sans-serif;
+    }
+    #boot-err {
+      display: none;
+      max-width: 560px;
+      margin: 12vh auto;
+      padding: 0 22px;
+    }
+    #boot-err pre {
+      white-space: pre-wrap;
+      background: #0d1a27;
+      border: 1px solid #203143;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 12px;
+      color: #ff9aa8;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <div id="boot-err">
+    <h2>Halaman gagal dimuat</h2>
+    <p style="color:#93a3b5">
+      Muat ulang halaman. Bila masih kosong, kirim pesan di bawah ini ke pengembang. Pastikan web dibuka lewat <code>npm run dev</code> atau situs yang sudah di-deploy, bukan dengan membuka file index.html langsung.
+    </p>
+    <pre id="boot-msg"></pre>
+  </div>
+
+  <noscript>
+    <p style="padding:24px">Aktifkan JavaScript di browser Anda untuk membuka platform Dhiraya.</p>
+  </noscript>
+
+  <script>
+    (function(){
+      var m = [];
+      function show() {
+        var r = document.getElementById("root");
+        if (r && r.childNodes.length === 0) {
+          document.getElementById("boot-err").style.display = "block";
+          document.getElementById("boot-msg").textContent = m.join("\n") || "Tidak ada error tercatat; skrip aplikasi mungkin gagal diunduh.";
+        }
+      }
+      addEventListener("error", function(e) {
+        m.push(String(e.message || e.error || "error") + (e.filename ? " @ " + e.filename : ""));
+      });
+      addEventListener("unhandledrejection", function(e) {
+        m.push("Promise: " + String(e.reason && e.reason.message || e.reason));
+      });
+      setTimeout(show, 4000);
+    })();
+  </script>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>

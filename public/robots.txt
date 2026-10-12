@@ -1,0 +1,11 @@
+# robots.txt for Dhiraya Digital Identity & Smart Cards
+User-agent: *
+Allow: /
+Allow: /collection
+Allow: /how
+Allow: /about
+Allow: /c/
+Disallow: /admin
+Disallow: /api/
+
+Sitemap: https://dhiraya.com/sitemap.xml

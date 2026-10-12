@@ -262,7 +262,7 @@ export default function AdminPanel({ supabase, user, go, logout, notify, tab, se
   return (
     <main className="dashboard-wrap">
       <aside className="sidebar">
-        <button className="brand" onClick={() => go('home')}><span className="brand-mark"><Sparkles size={17} /></span><span>cardora</span></button>
+        <button className="brand" onClick={() => go('home')}><span className="brand-mark"><Sparkles size={17} /></span><span>dhiraya</span></button>
         <span className="sidebar-label">ADMIN</span>
         {TABS.map(([label, icon]) => <button key={label} className={'side-link ' + (tab === label ? 'active' : '')} onClick={() => setTab(label)}>{icon}{label}</button>)}
         <div className="sidebar-bottom"><button className="side-link" onClick={logout}><LogOut />Keluar</button></div>
@@ -335,7 +335,7 @@ export default function AdminPanel({ supabase, user, go, logout, notify, tab, se
                   </ul>
                   <p className="muted">Tulis ke NFC butuh Chrome di Android, NFC aktif, dan panel dibuka dari domain produksi (https). Dari perangkat lain, salin tautan lalu tulis dengan aplikasi NFC Tools, atau pakai QR di samping.</p>
                 </div>
-                <div className="share-qr">{qr ? <img src={qr} alt={'QR ' + c.code} /> : <span className="muted">Membuat QR…</span>}{qr && <a className="text-link" href={qr} download={'cardora-' + c.code + '.png'}>Unduh QR</a>}</div>
+                <div className="share-qr">{qr ? <img src={qr} alt={'QR ' + c.code} /> : <span className="muted">Membuat QR…</span>}{qr && <a className="text-link" href={qr} download={'dhiraya-' + c.code + '.png'}>Unduh QR</a>}</div>
               </div>
             </div>;
           })()}
