@@ -1,0 +1,22 @@
+CARDORA - KONFIGURASI ENVIRONMENT
+
+File ini salinan template untuk Windows (file berawalan titik sering tersembunyi).
+
+LOKAL:
+1. Buat file bernama .env.local di folder yang sama dengan package.json.
+2. Isi dua baris ini dengan nilai dari Supabase -> Project Settings -> API:
+
+VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY
+
+3. Restart server Vite (npm run dev).
+
+VERCEL:
+- Tambahkan dua variabel yang sama di Settings -> Environment Variables
+  (scope Production), lalu REDEPLOY. Variabel VITE_* dibaca saat build.
+
+OPSIONAL (pencatatan kunjungan kartu / EXP) - hanya di Vercel, TANPA awalan VITE_:
+SUPABASE_SERVICE_ROLE_KEY=...        (rahasia)
+VISITOR_HASH_SECRET=string-acak-minimal-32-karakter
+
+Jangan pernah memasukkan service_role key ke variabel VITE_* atau ke GitHub.
