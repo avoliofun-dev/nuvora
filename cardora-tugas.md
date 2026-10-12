@@ -27,6 +27,8 @@
 | 2026-10-13 | Koleksi tampilkan sidebar jika member login | ✅ Selesai |
 | 2026-10-13 | Git init + commit pertama berhasil | ✅ Selesai |
 | 2026-10-13 | Build produksi sukses (✓ 1677 modules, exit 0) | ✅ Selesai |
+| 2026-10-13 | Rebrand nama web ke **Dhiraya** di seluruh UI & metadata | ✅ Selesai |
+| 2026-10-13 | Penguatan SEO: Open Graph, Twitter Cards, Schema JSON-LD, Sitemap & robots.txt | ✅ Selesai |
 
 ## Catatan teknis penting
 - Fungsi `member_card_taps(uuid)` ada di `supabase_patch_v5.sql`. Jika data tap kosong/error, jalankan patch tersebut di Supabase SQL Editor.
