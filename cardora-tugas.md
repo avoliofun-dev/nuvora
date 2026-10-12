@@ -11,6 +11,25 @@
 ## Status
 - [x] Tahap 1 — dashboard semua kartu, profil digabung, saklar sembunyi (kode selesai; belum diuji di database nyata)
 - [x] Tahap 2 — upload dari perangkat, foto di form pesanan, editor tautan sosial (kode selesai; belum diuji di browser/HP)
-- [ ] Tahap 3 — setel 3D, swipe, hologram setelah uji di HP; tombol tulis NFC; tema tambahan
+- [x] Tahap 3 (UI selesai) — Sidebar fix desktop, user popup topbar, profile 2-grid, menu member pindah ke sidebar
+- [ ] Tahap 3 (lanjutan) — setel 3D, swipe, hologram setelah uji di HP; tombol tulis NFC; tema tambahan
 - [ ] Tahap 4 — data tap lebih kaya, pertukaran kontak, notifikasi tap
 - [ ] Tahap 5 — pembayaran online, keamanan & rate limit, uji lintas perangkat, checklist rilis
+
+## Log keberhasilan
+| Tanggal | Fitur | Status |
+|---|---|---|
+| 2026-10-13 | Sidebar fix/sticky di desktop (240px, top:78px) | ✅ Selesai |
+| 2026-10-13 | Semua menu topbar member dipindah ke sidebar | ✅ Selesai |
+| 2026-10-13 | User popup dropdown di topbar (klik avatar → menu) | ✅ Selesai |
+| 2026-10-13 | Halaman profil jadi 2 grid kanan-kiri di desktop | ✅ Selesai |
+| 2026-10-13 | Data tap: loading spinner, error yang jelas + tombol retry | ✅ Selesai |
+| 2026-10-13 | Koleksi tampilkan sidebar jika member login | ✅ Selesai |
+| 2026-10-13 | Git init + commit pertama berhasil | ✅ Selesai |
+| 2026-10-13 | Build produksi sukses (✓ 1677 modules, exit 0) | ✅ Selesai |
+
+## Catatan teknis penting
+- Fungsi `member_card_taps(uuid)` ada di `supabase_patch_v5.sql`. Jika data tap kosong/error, jalankan patch tersebut di Supabase SQL Editor.
+- Git diinisialisasi di root proyek. Commit pertama: `07a2427`.
+- Dev server berjalan di http://localhost:5173/ (task background).
+
