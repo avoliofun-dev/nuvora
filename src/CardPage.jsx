@@ -4,7 +4,7 @@ import {
   Instagram, Globe, ExternalLink, Mail, Phone, MapPin, Briefcase, Download, Sparkles,
   MessageCircle, Send, Link2, Eye, Crown, Zap, Nfc, Flame, Trophy, Award, Rocket, Users, CheckCircle2, HelpCircle
 } from 'lucide-react';
-import { rarities, fmtDate, getCardBadges } from './shared.js';
+import { rarities, fmtDate, getCardBadges, getCardUrl, promptPublicDomainIfNeeded } from './shared.js';
 
 // Kartu contoh: hanya tampil untuk /c/NRD-0001 bila kode itu belum ada di database.
 export const DEMO_CARD = {
@@ -44,7 +44,8 @@ export async function writeNfcCard(code, notify) {
     notify('Web NFC tidak didukung di browser ini. Buka lewat Chrome di Android (HTTPS).');
     return false;
   }
-  const url = location.origin + '/c/' + encodeURIComponent(code);
+  const base = await promptPublicDomainIfNeeded();
+  const url = base.replace(/\/+$/, '') + '/c/' + encodeURIComponent(code);
   if (!window.confirm('Tulis URL kartu ini ke chip NFC?\n\n' + url + '\n\nTempelkan kartu NFC ke bagian belakang HP.')) return false;
   notify('Tempelkan kartu NFC ke bagian belakang HP…');
   try {
@@ -213,7 +214,7 @@ export const HoloCard = forwardRef(function HoloCard({ view, r, art, accent, st,
       <div className="hc-inner" ref={innerRef}>
         <div className={`hc-face hc-front fl-${layout}`}>
           <div className="hc-bg" style={frontBg} />
-          {layout === 'bold' && <div className="hc-watermark">{String(view.level).padStart(2, '0')}</div>}
+          {layout === 'bold' && <div className="hc-watermark">{String(view.level || 1).padStart(2, '0')}</div>}
           <div className="hc-top"><span>✦ DHIRAYA</span><span className="rarity-chip">{view.rarity}</span></div>
           <div className="hc-bottom">
             <b>{cardName}</b>
@@ -230,7 +231,7 @@ export const HoloCard = forwardRef(function HoloCard({ view, r, art, accent, st,
             <strong>DHIRAYA</strong>
             {qr ? <img className="hc-qr" src={qr} alt={'QR ' + view.code} draggable="false" /> : <span className="nfc-glyph">◉</span>}
             <b>{view.code}</b>
-            <span>KOLEKSI #{String(view.number).padStart(3, '0')} · LV {view.level}</span>
+            <span>KOLEKSI #{String(view.number || 1).padStart(3, '0')} · LV {view.level || 1}</span>
             <small>Tap atau pindai untuk verifikasi</small>
           </div>
           <div className="holo" /><div className="glare" />
@@ -289,38 +290,23 @@ export default function CardPage({ view, loading, code, go, notify, supabase, se
     return () => removeEventListener('keydown', onKey);
   }, [idx, mode3d, goTo]);
 
-  if (loading) return <div className="cp-root cp-center"><div className="cp-loader"><span /><small>Memuat kartu…</small></div></div>;
-
-  if (!view) {
-    return (
-      <div className="cp-root cp-center">
-        <div className="cp-notfound">
-          <Sparkles size={30} />
-          <h2>Kartu tidak ditemukan</h2>
-          <p>Kode <b>{code}</b> belum terdaftar atau kartunya belum aktif. Periksa kembali kode pada kartumu.</p>
-          <button className="btn btn-gold" onClick={() => go('home')}>Ke beranda <ArrowRight size={15} /></button>
-        </div>
-      </div>
-    );
-  }
-
-  const r = rarities.find(x => x.id === view.rarity) || rarities[0];
-  const st = view.style || {};
+  const r = rarities.find(x => x.id === view?.rarity) || rarities[0];
+  const st = view?.style || {};
   const accent = /^#[0-9a-f]{6}$/i.test(st.accent || '') ? st.accent : r.color;
-  const owner = view.owner;
-  const cardName = view.display_name || owner?.display_name || 'Dhiraya';
-  const art = safeUrl(view.front_image) ? view.front_image : r.image;
-  const pct = Math.min(100, Math.round((view.exp_into_level / Math.max(1, view.exp_per_level)) * 100));
-  const socials = [...(view.socials || [])].filter(x => safeUrl(x.url));
+  const owner = view?.owner;
+  const cardName = view?.display_name || owner?.display_name || 'Dhiraya';
+  const art = safeUrl(view?.front_image) ? view.front_image : r.image;
+  const pct = Math.min(100, Math.round(((Number(view?.exp_into_level) || 0) / Math.max(1, Number(view?.exp_per_level) || 100)) * 100));
+  const socials = [...(view?.socials || [])].filter(x => safeUrl(x.url));
   if (safeUrl(owner?.website_url) && !socials.some(x => x.url === owner.website_url)) socials.push({ platform: 'website', label: 'Website', url: owner.website_url });
-  const experiences = view.experiences || [];
-  const events = [['Kartu dibuat', view.created_at], view.activated_at && ['Kartu diaktifkan', view.activated_at], view.first_visit_at && ['Kunjungan unik pertama', view.first_visit_at]].filter(Boolean);
+  const experiences = view?.experiences || [];
+  const events = view ? [['Kartu dibuat', view.created_at], view.activated_at && ['Kartu diaktifkan', view.activated_at], view.first_visit_at && ['Kunjungan unik pertama', view.first_visit_at]].filter(Boolean) : [];
   const showTaps = st.show_taps !== false;
-  const hasContact = owner && (owner.public_email || owner.public_phone || socials.length > 0);
-  const isEventMode = Boolean(view.event_mode || st.event_mode);
+  const hasContact = Boolean(owner && (owner.public_email || owner.public_phone || socials.length > 0));
+  const isEventMode = Boolean(view?.event_mode || st.event_mode);
   const isProfileComplete = Boolean(owner?.avatar_url && (owner?.bio || owner?.headline) && socials.length >= 2 && experiences.length >= 1);
-  const badges = getCardBadges(view.taps, view.streak || 0, {
-    actions: view.actions || {},
+  const badges = getCardBadges(view?.taps || 0, view?.streak || 0, {
+    actions: view?.actions || {},
     profileComplete: isProfileComplete,
     eventMode: isEventMode
   });
@@ -368,10 +354,10 @@ export default function CardPage({ view, loading, code, go, notify, supabase, se
   }, [code, isEventMode, setCardView, supabase]);
 
   const handleDownloadVcf = useCallback(() => {
-    downloadVcf(owner, owner?.display_name, view.code);
+    downloadVcf(owner, owner?.display_name, view?.code || code);
     recordAction('vcard_download');
     notify(`✨ Kontak disimpan! +${isEventMode ? '30' : '15'} EXP untuk pemilik kartu!`);
-  }, [owner, view?.code, recordAction, isEventMode, notify]);
+  }, [owner, view?.code, code, recordAction, isEventMode, notify]);
 
   const handleLeadSubmit = useCallback(async e => {
     e.preventDefault();
@@ -386,7 +372,7 @@ export default function CardPage({ view, loading, code, go, notify, supabase, se
   }, [leadForm, recordAction, owner?.display_name, isEventMode, notify]);
 
   const share = async () => {
-    const url = location.origin + '/c/' + view.code;
+    const url = getCardUrl(view?.code || code);
     try {
       if (navigator.share) { await navigator.share({ title: cardName + ' · Dhiraya', url }); return; }
       await navigator.clipboard.writeText(url); notify('Tautan kartu disalin.');
@@ -407,6 +393,21 @@ export default function CardPage({ view, loading, code, go, notify, supabase, se
   };
 
   const ringC = 2 * Math.PI * 44;
+
+  if (loading) return <div className="cp-root cp-center"><div className="cp-loader"><span /><small>Memuat kartu…</small></div></div>;
+
+  if (!view) {
+    return (
+      <div className="cp-root cp-center">
+        <div className="cp-notfound">
+          <Sparkles size={30} />
+          <h2>Kartu tidak ditemukan</h2>
+          <p>Kode <b>{code}</b> belum terdaftar atau kartunya belum aktif. Periksa kembali kode pada kartumu.</p>
+          <button className="btn btn-gold" onClick={() => go('home')}>Ke beranda <ArrowRight size={15} /></button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="cp-root" style={{ '--accent': accent, '--rarity': r.color }}>
@@ -505,7 +506,7 @@ export default function CardPage({ view, loading, code, go, notify, supabase, se
         {show('contact') && <section className="cp-slide">
           <div className="cp-panel">
             <span className="cp-eyebrow">KONTAK & SOSIAL</span>
-            <h2>{owner ? `Terhubung dengan ${owner.display_name}` : 'Tautan'}</h2>
+            <h2>{owner ? `Terhubung dengan ${owner.display_name || 'Pemilik'}` : 'Tautan'}</h2>
             {!hasContact && <p className="cp-muted">Belum ada kontak atau tautan sosial yang dibagikan.</p>}
             {owner && !show('profile') && hasContact && <button className="btn btn-gold cp-cta" onClick={handleDownloadVcf}><Download size={15} /> Simpan kontak {isEventMode ? '(+30 EXP)' : '(+15 EXP)'}</button>}
             <div className="cp-links">
@@ -530,12 +531,12 @@ export default function CardPage({ view, loading, code, go, notify, supabase, se
                     <CheckCircle2 size={24} style={{ color: 'var(--success)' }} />
                     <div>
                       <b>Kontakmu berhasil terkirim!</b>
-                      <p>{owner.display_name} dapat melihat kontakmu di buku tamu dashboard miliknya.</p>
+                      <p>{owner.display_name || 'Pemilik'} dapat melihat kontakmu di buku tamu dashboard miliknya.</p>
                     </div>
                   </div>
                 ) : (
                   <form onSubmit={handleLeadSubmit} className="cp-lead-form">
-                    <p className="cp-lead-desc">Tinggalkan nomor kontakmu agar {owner.display_name} bisa menghubungimu kembali.</p>
+                    <p className="cp-lead-desc">Tinggalkan nomor kontakmu agar {owner.display_name || 'pemilik'} bisa menghubungimu kembali.</p>
                     <div className="cp-lead-inputs">
                       <input
                         type="text"
@@ -559,7 +560,7 @@ export default function CardPage({ view, loading, code, go, notify, supabase, se
                       />
                     </div>
                     <button type="submit" className="btn btn-gold cp-lead-btn" disabled={leadBusy}>
-                      <Send size={14} /> Kirim kontak ke {owner.display_name.split(' ')[0]} ({isEventMode ? '+50 EXP' : '+25 EXP'})
+                      <Send size={14} /> Kirim kontak ke {(owner?.display_name || 'Pemilik').trim().split(/\s+/)[0]} ({isEventMode ? '+50 EXP' : '+25 EXP'})
                     </button>
                   </form>
                 )}
@@ -584,7 +585,7 @@ export default function CardPage({ view, loading, code, go, notify, supabase, se
               <div><small>Total EXP</small><b>{view.exp}</b></div>
               {showTaps && <div><small>Total tap</small><b>{view.taps}</b></div>}
               <div><small>Daily Streak</small><b style={{ color: '#ff8a50' }}>{view.streak ? `${view.streak} Hari 🔥` : '0 Hari'}</b></div>
-              <div><small>Koleksi</small><b>#{String(view.number).padStart(3, '0')}</b></div>
+              <div><small>Koleksi</small><b>#{String(view.number || 1).padStart(3, '0')}</b></div>
             </div>
 
             {/* Panduan & Misi EXP */}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { ShieldCheck, LayoutDashboard, ShoppingBag, Layers, UserRound, Crown, Settings, LogOut, Search, Zap, Eye, Sparkles, Plus, Link2, Nfc } from 'lucide-react';
 import QRCode from 'qrcode';
-import { rarities, money, fmtDate, orderStatusLabel, orderStatusValue, mapOrder } from './shared.js';
+import { rarities, money, fmtDate, orderStatusLabel, orderStatusValue, mapOrder, getCardUrl, promptPublicDomainIfNeeded } from './shared.js';
 
 const TABS = [['Ringkasan', <LayoutDashboard />], ['Pesanan', <ShoppingBag />], ['Kartu', <Layers />], ['Member', <UserRound />], ['Rarity', <Crown />], ['Pengaturan', <Settings />]];
 const CARD_STATUS = ['DRAFT', 'ACTIVE', 'SUSPENDED', 'LOST', 'RETIRED'];
@@ -54,7 +54,7 @@ export default function AdminPanel({ supabase, user, go, logout, notify, tab, se
   }
 
   // ---- Tulis URL kartu ke chip NFC (Web NFC: Chrome Android, HTTPS) ----
-  const cardUrl = code => location.origin + '/c/' + encodeURIComponent(code);
+  const cardUrl = code => getCardUrl(code);
 
   useEffect(() => {
     if (dialog && dialog.type === 'share') QRCode.toDataURL(cardUrl(dialog.card.code), { width: 360, margin: 2 }).then(setQr).catch(() => setQr(''));
@@ -75,7 +75,8 @@ export default function AdminPanel({ supabase, user, go, logout, notify, tab, se
 
   async function writeNfc(code) {
     if (!('NDEFReader' in window)) return notify('Web NFC tidak didukung di perangkat ini. Buka panel admin lewat Chrome di Android (alamat https).');
-    const url = cardUrl(code);
+    const base = await promptPublicDomainIfNeeded();
+    const url = base.replace(/\/+$/, '') + '/c/' + encodeURIComponent(code);
     if (!window.confirm('Tulis URL ini ke chip NFC?\n\n' + url + '\n\nIsi chip sebelumnya akan ditimpa.')) return;
     setNfcBusy(code);
     notify('Tempelkan kartu NFC ke bagian belakang HP…');

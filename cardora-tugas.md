@@ -32,6 +32,7 @@
 | 2026-10-15 | Tahap 3 lanjutan: Web NFC writer (Studio & Card Page), kemiringan giroskop HP (deviceorientation), tap-to-flip, tema latar & font baru | ✅ Selesai |
 | 2026-10-15 | Gamifikasi: Daily Tap Streak (hari berturut-turut + bonus EXP bertingkat) & Lencana Pencapaian (Badges) | ✅ Selesai |
 | 2026-10-15 | Gamifikasi Ekspansi (Tahap 4): Multi-Visitor EXP, Engagement Aksi (vCard +15 EXP, Medsos +5 EXP, Tukar Kontak +25 EXP), Mode Acara 2x Booster, Profile Mastery +100 EXP, dan Buku Tamu Studio | ✅ Selesai |
+| 2026-10-15 | Fix: Perbaikan Minified React error #310 (urutan hook CardPage), penulisan URL NFC publik otomatis, dan handling error data kartu member | ✅ Selesai |
 
 ## Catatan teknis penting
 - Fungsi `member_card_taps(uuid)` ada di `supabase_patch_v5.sql`. Jika data tap kosong/error, jalankan patch tersebut di Supabase SQL Editor.

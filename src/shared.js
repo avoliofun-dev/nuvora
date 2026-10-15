@@ -66,3 +66,26 @@ export function getCardBadges(taps = 0, streak = 0, extra = {}) {
   });
 }
 
+export function getCardUrl(code) {
+  const envUrl = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_PUBLIC_SITE_URL : '';
+  const stored = typeof localStorage !== 'undefined' ? localStorage.getItem('dhiraya_public_domain') : '';
+  const base = stored || envUrl || (typeof location !== 'undefined' ? location.origin : 'https://dhiraya.com');
+  return base.replace(/\/+$/, '') + '/c/' + encodeURIComponent(code);
+}
+
+export async function promptPublicDomainIfNeeded() {
+  if (typeof location === 'undefined') return 'https://dhiraya.com';
+  let stored = (typeof localStorage !== 'undefined' && localStorage.getItem('dhiraya_public_domain')) || (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_PUBLIC_SITE_URL) || '';
+  if (!stored && (location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+    const input = window.prompt(
+      '⚠️ PERINGATAN: Anda sedang membuka web di localhost!\n\nJika URL "localhost" ditulis ke kartu fisik NFC, HP orang lain yang men-tap kartu akan mengalami error "ERR_CONNECTION_REFUSED / Situs tidak dapat dijangkau" karena HP mencari server di dirinya sendiri.\n\nMasukkan domain/URL publik situs Anda (contoh: https://dhiraya.com atau https://projek-anda.vercel.app):',
+      'https://'
+    );
+    if (input && input.trim() && input.trim() !== 'https://') {
+      stored = input.trim().replace(/\/+$/, '');
+      if (typeof localStorage !== 'undefined') localStorage.setItem('dhiraya_public_domain', stored);
+    }
+  }
+  return stored || location.origin;
+}
+

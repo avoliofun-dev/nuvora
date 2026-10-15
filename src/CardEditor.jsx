@@ -12,6 +12,7 @@ const SECTIONS = [['profile', 'Profil', 'Foto, jabatan, perusahaan, lokasi, dan 
 export default function CardEditor({ supabase, auth, notify, go, cardCode }) {
   const [tab, setTab] = useState(TABS[0]);
   const [cards, setCards] = useState(null);
+  const [cardError, setCardError] = useState(null);
   const [sel, setSel] = useState('');
   const [busy, setBusy] = useState(false);
   const [nfcBusy, setNfcBusy] = useState(false);
@@ -35,7 +36,8 @@ export default function CardEditor({ supabase, auth, notify, go, cardCode }) {
     (async () => {
       const d = await supabase.rpc('member_dashboard');
       if (!alive) return;
-      if (d.error) { notify('Gagal memuat kartu: ' + d.error.message); setCards([]); return; }
+      if (d.error) { setCardError(d.error.message); notify('Gagal memuat kartu: ' + d.error.message); setCards([]); return; }
+      setCardError(null);
       const list = (d.data && d.data.cards) || [];
       setCards(list);
       const first = list.find(c => c.code === cardCode) || list[0];
@@ -142,7 +144,13 @@ export default function CardEditor({ supabase, auth, notify, go, cardCode }) {
         <p>Sesuaikan tampilan kartu, lengkapi profil profesional, dan pantau kapan kartumu di-tap.</p>
       </div>
 
-      {cards.length === 0 && (
+      {cardError && (
+        <div className="notice" style={{ marginBottom: 16, borderColor: 'rgba(255,100,124,.4)' }}>
+          <b style={{ color: 'var(--danger)' }}>Gagal memuat kartu:</b> {cardError}. Pastikan patch SQL database Supabase terbaru sudah dijalankan.
+        </div>
+      )}
+
+      {!cardError && cards.length === 0 && (
         <div className="panel">
           <h3>Belum ada kartu</h3>
           <p className="muted">Setelah pesananmu diproses, admin akan menautkan kartu ke akunmu. Profilmu tetap bisa dilengkapi sekarang di halaman Profil.</p>

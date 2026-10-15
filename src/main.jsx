@@ -76,7 +76,17 @@ function App(){
    if(!alive)return;
    if(error){notify('Gagal memuat pesanan: '+error.message);return}
    setOrders((data||[]).map(mapOrder));
-   if(page==='member'||page==='my-cards'){const r=await supabase.rpc('member_dashboard');if(alive&&!r.error)setStats(r.data)}
+   if(page==='member'||page==='my-cards'){
+     const r=await supabase.rpc('member_dashboard');
+     if(!alive)return;
+     if(r.error){
+       console.error('member_dashboard error:', r.error);
+       notify('Gagal memuat kartu: '+r.error.message);
+       setStats({ error: r.error.message, cards: [], card_count: 0, total_exp: 0, top_level: 0, total_taps: 0 });
+     } else {
+       setStats(r.data);
+     }
+   }
   })();
   return()=>{alive=false}
  },[page,auth]);
@@ -329,6 +339,7 @@ function BottomNav({page,go,auth,setAuthMode}){
 }
 function MyCards({stats,go}){
  if(!stats)return <p className="muted">Memuat kartu…</p>;
+ if(stats.error)return <div className="notice" style={{marginBottom:16,borderColor:'rgba(255,100,124,.4)'}}><b style={{color:'var(--danger)'}}>Gagal memuat kartu:</b> {stats.error}. Pastikan patch SQL database Supabase terbaru sudah dijalankan.</div>;
  const list=stats.cards||[];
  if(list.length===0)return <p className="muted">Belum ada kartu. Setelah pesananmu diproses, admin akan menautkan kartu ke akunmu.</p>;
  return <div className="mc-grid">{list.map(c=>{const r=rarities.find(x=>x.id===c.rarity)||rarities[0];const art=/^https?:\/\//i.test(c.front_image||'')?c.front_image:r.image;return <div className="mc-tile" key={c.id} style={{'--rarity':(c.style&&/^#[0-9a-f]{6}$/i.test(c.style.accent||''))?c.style.accent:r.color}}><button className="mc-art" onClick={()=>go('card',c.code)} style={{backgroundImage:`linear-gradient(180deg,transparent 40%,rgba(3,9,16,.95)),url(${art})`}} aria-label={'Buka kartu '+c.code}><span className="mc-rarity">{r.label}</span><b>{c.display_name||c.code}</b><small>{c.code} · LV {c.level}</small></button><div className="mc-meta"><span className={'status '+(c.status==='ACTIVE'?'done':'pending')}>{c.status==='ACTIVE'?'Aktif':c.status}</span><span>{c.exp} EXP · {c.taps} tap</span></div><div className="mc-actions"><button className="btn btn-ghost small" onClick={()=>go('card',c.code)}>Lihat</button><button className="btn btn-gold small" onClick={()=>go('card-editor',c.code)}>Studio</button></div></div>})}</div>}
