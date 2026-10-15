@@ -301,6 +301,187 @@
 .cp-badge-card.locked .cp-badge-status{color:#7f90a1;font-weight:500}
 @media(max-width:480px){.cp-badges-grid{grid-template-columns:1fr}}
 
+/* Event Booster Banner */
+.cp-event-booster-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(90deg, rgba(244,193,107,.18), rgba(255,100,124,.18));
+  border-bottom: 1px solid rgba(244,193,107,.35);
+  color: #ffd899;
+  font-size: 12px;
+  padding: 6px 14px;
+  text-align: center;
+}
+.cp-event-booster-banner b { color: #fff; }
+.booster-pulse {
+  color: var(--gold);
+  animation: boosterPulse 1.4s ease-in-out infinite;
+}
+@keyframes boosterPulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px var(--gold)); }
+  50% { transform: scale(1.22); filter: drop-shadow(0 0 8px var(--gold)); }
+}
+
+/* Badge Boost Pill */
+.badge-boost {
+  background: linear-gradient(135deg, #f4c16b, #ff8a50);
+  color: #0b1620;
+  font: 800 10px Manrope;
+  padding: 2px 7px;
+  border-radius: 999px;
+  letter-spacing: .5px;
+}
+
+/* Guestbook / Lead Capture Box */
+.cp-lead-box {
+  margin-top: 22px;
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(244, 193, 107, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+.cp-lead-box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+.cp-lead-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.cp-lead-desc {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+.cp-lead-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cp-lead-inputs input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #fff;
+  transition: border-color .2s;
+}
+.cp-lead-inputs input:focus {
+  border-color: var(--gold);
+  outline: none;
+  background: rgba(255, 255, 255, 0.08);
+}
+.cp-lead-btn {
+  width: 100%;
+  margin-top: 10px;
+  font-size: 13px;
+  padding: 10px;
+  border-radius: 8px;
+}
+.cp-lead-success {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(91, 224, 174, 0.08);
+  border: 1px solid rgba(91, 224, 174, 0.3);
+  border-radius: 10px;
+}
+.cp-lead-success b {
+  font-size: 13px;
+  color: #5be0ae;
+  display: block;
+}
+.cp-lead-success p {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin: 4px 0 0;
+}
+
+/* EXP Guide Box on Stats Slide */
+.cp-exp-guide-box {
+  margin-top: 18px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+.cp-exp-guide-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.cp-exp-guide-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.cp-exp-guide-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #c7d2de;
+}
+.cp-exp-guide-item b {
+  font-weight: 700;
+  color: var(--gold);
+  font-size: 11.5px;
+}
+
+/* Profile Mastery Card */
+.pf-mastery-card {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(244, 193, 107, 0.2);
+}
+.pf-mastery-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.pf-mastery-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.pf-mastery-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f4c16b, #5be0ae);
+  border-radius: 999px;
+  transition: width .4s ease;
+}
+.pf-mastery-tasks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.pf-mastery-tasks span.done {
+  color: #5be0ae;
+  font-weight: 600;
+}
+
+
 
 /* ========================================================
    NAVIGASI MODERN & WEB APP RESPONSIVE (CARDORA v6.1)

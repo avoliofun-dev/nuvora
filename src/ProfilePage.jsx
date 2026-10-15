@@ -152,42 +152,72 @@ export default function ProfilePage({ supabase, auth, user, notify, go, onSaved 
         <p className="muted">Data di sini dibagikan ke semua kartumu. Lengkapi profil dan tautan sosial agar kartu digitalmu tampil maksimal.</p>
       </div>
 
-      {cardStats && (() => {
-        const badges = getCardBadges(cardStats.total_taps, cardStats.streak || 0);
+      {(() => {
+        const hasAvatar = Boolean(pf.avatar_url);
+        const hasBio = Boolean(pf.headline || pf.bio);
+        const hasSocials = socials.filter(s => s.url).length >= 2;
+        const hasExp = exps.filter(e => e.title).length >= 1;
+        const score = (hasAvatar ? 25 : 0) + (hasBio ? 25 : 0) + (hasSocials ? 25 : 0) + (hasExp ? 25 : 0);
+        const badges = getCardBadges(cardStats?.total_taps ?? 0, cardStats?.streak ?? 0, {
+          profileComplete: score === 100
+        });
         return (
           <div className="panel pf-stats-banner">
             <div className="pf-stats-left">
               <span className="eyebrow" style={{ color: 'var(--gold)' }}>HASIL TAP & GAMIFIKASI KARTU</span>
-              <div className="pf-stats-numbers">
-                <div className="pf-stat-item">
-                  <span className="pf-stat-label"><Eye size={14} /> Total Tap</span>
-                  <strong className="pf-stat-val gold">{cardStats.total_taps ?? 0}</strong>
+              {cardStats && (
+                <div className="pf-stats-numbers">
+                  <div className="pf-stat-item">
+                    <span className="pf-stat-label"><Eye size={14} /> Total Tap</span>
+                    <strong className="pf-stat-val gold">{cardStats.total_taps ?? 0}</strong>
+                  </div>
+                  <div className="pf-stat-sep" />
+                  <div className="pf-stat-item">
+                    <span className="pf-stat-label"><Crown size={14} /> Level</span>
+                    <strong className="pf-stat-val">LV {cardStats.top_level ?? 1}</strong>
+                  </div>
+                  <div className="pf-stat-sep" />
+                  <div className="pf-stat-item">
+                    <span className="pf-stat-label"><Zap size={14} /> EXP</span>
+                    <strong className="pf-stat-val">{cardStats.total_exp ?? 0}</strong>
+                  </div>
+                  <div className="pf-stat-sep" />
+                  <div className="pf-stat-item">
+                    <span className="pf-stat-label"><Flame size={14} /> Streak</span>
+                    <strong className="pf-stat-val" style={{ color: '#ff8a50' }}>{cardStats.streak ? `${cardStats.streak} Hari 🔥` : '0 Hari'}</strong>
+                  </div>
+                  <div className="pf-stat-sep" />
+                  <div className="pf-stat-item">
+                    <span className="pf-stat-label"><Trophy size={14} /> Lencana</span>
+                    <strong className="pf-stat-val">{badges.filter(b => b.unlocked).length} Terbuka</strong>
+                  </div>
                 </div>
-                <div className="pf-stat-sep" />
-                <div className="pf-stat-item">
-                  <span className="pf-stat-label"><Crown size={14} /> Level</span>
-                  <strong className="pf-stat-val">LV {cardStats.top_level ?? 1}</strong>
+              )}
+
+              {/* Progress Kelengkapan Profil (Profile Mastery EXP) */}
+              <div className="pf-mastery-card">
+                <div className="pf-mastery-head">
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>
+                    ⭐ Kelengkapan Profil: <span style={{ color: 'var(--gold)' }}>{score}%</span> ({score}/100 EXP)
+                  </span>
+                  <span className="muted" style={{ fontSize: 11 }}>
+                    {score === 100 ? '🎉 Bonus Penuh +100 EXP Aktif!' : 'Lengkapi semua untuk bonus instan +100 EXP'}
+                  </span>
                 </div>
-                <div className="pf-stat-sep" />
-                <div className="pf-stat-item">
-                  <span className="pf-stat-label"><Zap size={14} /> EXP</span>
-                  <strong className="pf-stat-val">{cardStats.total_exp ?? 0}</strong>
+                <div className="pf-mastery-bar">
+                  <div className="pf-mastery-fill" style={{ width: `${score}%` }} />
                 </div>
-                <div className="pf-stat-sep" />
-                <div className="pf-stat-item">
-                  <span className="pf-stat-label"><Flame size={14} /> Streak</span>
-                  <strong className="pf-stat-val" style={{ color: '#ff8a50' }}>{cardStats.streak ? `${cardStats.streak} Hari 🔥` : '0 Hari'}</strong>
-                </div>
-                <div className="pf-stat-sep" />
-                <div className="pf-stat-item">
-                  <span className="pf-stat-label"><Trophy size={14} /> Lencana</span>
-                  <strong className="pf-stat-val">{badges.filter(b => b.unlocked).length} Terbuka</strong>
+                <div className="pf-mastery-tasks">
+                  <span className={hasAvatar ? 'done' : ''}>{hasAvatar ? '✓' : '○'} Foto profil (+25)</span>
+                  <span className={hasBio ? 'done' : ''}>{hasBio ? '✓' : '○'} Headline / Bio (+25)</span>
+                  <span className={hasSocials ? 'done' : ''}>{hasSocials ? '✓' : '○'} Min. 2 Medsos (+25)</span>
+                  <span className={hasExp ? 'done' : ''}>{hasExp ? '✓' : '○'} Pengalaman kerja (+25)</span>
                 </div>
               </div>
             </div>
             <div className="pf-stats-actions">
-              <button type="button" className="btn btn-ghost small" onClick={() => go('my-cards')}>Kartu saya ({cardStats.card_count ?? 0})</button>
-              {cardStats.cards && cardStats.cards[0] && (
+              <button type="button" className="btn btn-ghost small" onClick={() => go('my-cards')}>Kartu saya ({cardStats?.card_count ?? 0})</button>
+              {cardStats?.cards && cardStats.cards[0] && (
                 <button type="button" className="btn btn-gold small" onClick={() => go('card-editor', cardStats.cards[0].code)}>Studio & Data tap</button>
               )}
             </div>

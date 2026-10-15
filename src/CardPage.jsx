@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback, useImperativeHandle, f
 import {
   ShieldCheck, ArrowRight, Rotate3D, Layers, Share2, Pencil, ChevronLeft, ChevronRight,
   Instagram, Globe, ExternalLink, Mail, Phone, MapPin, Briefcase, Download, Sparkles,
-  MessageCircle, Send, Link2, Eye, Crown, Zap, Nfc, Flame, Trophy, Award
+  MessageCircle, Send, Link2, Eye, Crown, Zap, Nfc, Flame, Trophy, Award, Rocket, Users, CheckCircle2, HelpCircle
 } from 'lucide-react';
 import { rarities, fmtDate, getCardBadges } from './shared.js';
 
@@ -249,10 +249,14 @@ function SocialIcon({ platform }) {
 }
 const SLIDE_DEFS = [['Kartu', null], ['Profil', 'profile'], ['Pengalaman', 'experience'], ['Kontak', 'contact'], ['Statistik', 'stats']];
 
-export default function CardPage({ view, loading, code, go, notify }) {
+export default function CardPage({ view, loading, code, go, notify, supabase, setCardView }) {
   const [mode3d, setMode3d] = useState(false);
   const [idx, setIdx] = useState(0);
   const [qr, setQr] = useState('');
+  const [leadForm, setLeadForm] = useState({ name: '', phone: '', note: '' });
+  const [leadSent, setLeadSent] = useState(false);
+  const [leadBusy, setLeadBusy] = useState(false);
+  const [questOpen, setQuestOpen] = useState(false);
   const card2d = useRef(null);
   const card3d = useRef(null);
   const swRef = useRef(null);
@@ -313,7 +317,73 @@ export default function CardPage({ view, loading, code, go, notify }) {
   const events = [['Kartu dibuat', view.created_at], view.activated_at && ['Kartu diaktifkan', view.activated_at], view.first_visit_at && ['Kunjungan unik pertama', view.first_visit_at]].filter(Boolean);
   const showTaps = st.show_taps !== false;
   const hasContact = owner && (owner.public_email || owner.public_phone || socials.length > 0);
-  const badges = getCardBadges(view.taps, view.streak || 0);
+  const isEventMode = Boolean(view.event_mode || st.event_mode);
+  const isProfileComplete = Boolean(owner?.avatar_url && (owner?.bio || owner?.headline) && socials.length >= 2 && experiences.length >= 1);
+  const badges = getCardBadges(view.taps, view.streak || 0, {
+    actions: view.actions || {},
+    profileComplete: isProfileComplete,
+    eventMode: isEventMode
+  });
+
+  const recordAction = useCallback(async (actionType, meta = {}) => {
+    let baseGain = actionType === 'vcard_download' ? 15 : actionType === 'lead_exchange' ? 25 : 5;
+    const expGain = isEventMode ? baseGain * 2 : baseGain;
+
+    if (setCardView) {
+      setCardView(v => {
+        if (!v) return v;
+        const newExp = (Number(v.exp) || 0) + expGain;
+        const per = Number(v.exp_per_level) || 100;
+        const newLevel = Math.floor(newExp / per) + 1;
+        const actions = { ...(v.actions || {}) };
+        if (actionType === 'vcard_download') actions.vcards = (actions.vcards || 0) + 1;
+        if (actionType === 'lead_exchange') actions.leads = (actions.leads || 0) + 1;
+        if (actionType === 'social_click') actions.clicks = (actions.clicks || 0) + 1;
+        return {
+          ...v,
+          exp: newExp,
+          level: newLevel,
+          exp_into_level: newExp % per,
+          actions
+        };
+      });
+    }
+
+    if (supabase && code && code !== 'NRD-0001') {
+      try {
+        const { data, error } = await supabase.rpc('record_card_action', {
+          p_card_code: code,
+          p_action_type: actionType,
+          p_visitor_hash: localStorage.getItem('dhiraya_vhash') || null,
+          p_meta: meta
+        });
+        if (!error && data && data.length) {
+          const row = data[0];
+          if (setCardView) {
+            setCardView(v => v ? { ...v, exp: row.out_exp ?? v.exp, level: row.out_level ?? v.level } : v);
+          }
+        }
+      } catch {}
+    }
+  }, [code, isEventMode, setCardView, supabase]);
+
+  const handleDownloadVcf = useCallback(() => {
+    downloadVcf(owner, owner?.display_name, view.code);
+    recordAction('vcard_download');
+    notify(`✨ Kontak disimpan! +${isEventMode ? '30' : '15'} EXP untuk pemilik kartu!`);
+  }, [owner, view?.code, recordAction, isEventMode, notify]);
+
+  const handleLeadSubmit = useCallback(async e => {
+    e.preventDefault();
+    const name = leadForm.name.trim();
+    const phone = leadForm.phone.trim();
+    if (!name || !phone) { notify('Mohon lengkapi nama dan kontakmu'); return; }
+    setLeadBusy(true);
+    await recordAction('lead_exchange', { name, phone, note: leadForm.note.trim() });
+    setLeadBusy(false);
+    setLeadSent(true);
+    notify(`🎉 Kontakmu terkirim ke ${owner?.display_name || 'pemilik'}! +${isEventMode ? '50' : '25'} EXP didapatkan!`);
+  }, [leadForm, recordAction, owner?.display_name, isEventMode, notify]);
 
   const share = async () => {
     const url = location.origin + '/c/' + view.code;
@@ -353,6 +423,13 @@ export default function CardPage({ view, loading, code, go, notify }) {
           {view.is_owner && <button className="cp-icon gold" onClick={() => go('card-editor', view.code)} aria-label="Edit kartu" title="Edit kartu"><Pencil size={16} /></button>}
         </div>
       </header>
+
+      {isEventMode && (
+        <div className="cp-event-booster-banner">
+          <Rocket size={14} className="booster-pulse" />
+          <span><b>Mode Acara Aktif</b> · Double EXP Boost (2x) untuk setiap tap & interaksi!</span>
+        </div>
+      )}
 
       <div className="cp-swiper" ref={swRef} onScroll={onScroll}
         onPointerDown={mDown} onPointerMove={mMove} onPointerUp={mUp} onPointerLeave={mUp}>
@@ -397,7 +474,7 @@ export default function CardPage({ view, loading, code, go, notify }) {
                 <div><small>EXP</small><b>{view.exp}</b></div>
               </div>
               {owner.bio ? <p className="cp-bio">{owner.bio}</p> : <p className="cp-muted">Pemilik belum menulis bio.</p>}
-              <button className="btn btn-gold cp-cta" onClick={() => downloadVcf(owner, owner.display_name, view.code)}><Download size={15} /> Simpan kontak</button>
+              <button className="btn btn-gold cp-cta" onClick={handleDownloadVcf}><Download size={15} /> Simpan kontak {isEventMode ? '(+30 EXP)' : '(+15 EXP)'}</button>
             </> : <>
               <h2>Profil belum tersedia</h2>
               <p className="cp-muted">Kartu ini belum dimiliki siapa pun, atau pemiliknya menyembunyikan profil.</p>
@@ -430,16 +507,64 @@ export default function CardPage({ view, loading, code, go, notify }) {
             <span className="cp-eyebrow">KONTAK & SOSIAL</span>
             <h2>{owner ? `Terhubung dengan ${owner.display_name}` : 'Tautan'}</h2>
             {!hasContact && <p className="cp-muted">Belum ada kontak atau tautan sosial yang dibagikan.</p>}
-            {owner && !show('profile') && hasContact && <button className="btn btn-gold cp-cta" onClick={() => downloadVcf(owner, owner.display_name, view.code)}><Download size={15} /> Simpan kontak</button>}
+            {owner && !show('profile') && hasContact && <button className="btn btn-gold cp-cta" onClick={handleDownloadVcf}><Download size={15} /> Simpan kontak {isEventMode ? '(+30 EXP)' : '(+15 EXP)'}</button>}
             <div className="cp-links">
-              {owner?.public_email && <a href={'mailto:' + owner.public_email}><Mail size={17} /> {owner.public_email}</a>}
-              {owner?.public_phone && <a href={'tel:' + owner.public_phone.replace(/[^\d+]/g, '')}><Phone size={17} /> {owner.public_phone}</a>}
+              {owner?.public_email && <a href={'mailto:' + owner.public_email} onClick={() => recordAction('social_click', { platform: 'email' })}><Mail size={17} /> {owner.public_email}</a>}
+              {owner?.public_phone && <a href={'tel:' + owner.public_phone.replace(/[^\d+]/g, '')} onClick={() => recordAction('social_click', { platform: 'phone' })}><Phone size={17} /> {owner.public_phone}</a>}
               {socials.map(x => (
-                <a key={x.platform + x.url} href={x.url} target="_blank" rel="noreferrer noopener">
+                <a key={x.platform + x.url} href={x.url} target="_blank" rel="noreferrer noopener" onClick={() => recordAction('social_click', { platform: x.platform })}>
                   <SocialIcon platform={x.platform} /> {x.label || x.platform} <ExternalLink size={13} className="cp-ext" />
                 </a>
               ))}
             </div>
+
+            {/* Form Tukar Kontak / Guestbook */}
+            {owner && (
+              <div className="cp-lead-box">
+                <div className="cp-lead-head">
+                  <span className="cp-eyebrow" style={{ color: 'var(--gold)' }}><Users size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} /> TUKAR KONTAK / KENALAN</span>
+                  <span className="badge-boost">{isEventMode ? '+50 EXP' : '+25 EXP'}</span>
+                </div>
+                {leadSent ? (
+                  <div className="cp-lead-success">
+                    <CheckCircle2 size={24} style={{ color: 'var(--success)' }} />
+                    <div>
+                      <b>Kontakmu berhasil terkirim!</b>
+                      <p>{owner.display_name} dapat melihat kontakmu di buku tamu dashboard miliknya.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleLeadSubmit} className="cp-lead-form">
+                    <p className="cp-lead-desc">Tinggalkan nomor kontakmu agar {owner.display_name} bisa menghubungimu kembali.</p>
+                    <div className="cp-lead-inputs">
+                      <input
+                        type="text"
+                        placeholder="Nama lengkap *"
+                        value={leadForm.name}
+                        onChange={e => setLeadForm({ ...leadForm, name: e.target.value })}
+                        required
+                      />
+                      <input
+                        type="tel"
+                        placeholder="Nomor WhatsApp / HP *"
+                        value={leadForm.phone}
+                        onChange={e => setLeadForm({ ...leadForm, phone: e.target.value })}
+                        required
+                      />
+                      <input
+                        type="text"
+                        placeholder="Catatan / Pesan singkat (opsional)"
+                        value={leadForm.note}
+                        onChange={e => setLeadForm({ ...leadForm, note: e.target.value })}
+                      />
+                    </div>
+                    <button type="submit" className="btn btn-gold cp-lead-btn" disabled={leadBusy}>
+                      <Send size={14} /> Kirim kontak ke {owner.display_name.split(' ')[0]} ({isEventMode ? '+50 EXP' : '+25 EXP'})
+                    </button>
+                  </form>
+                )}
+              </div>
+            )}
           </div>
         </section>}
 
@@ -462,6 +587,36 @@ export default function CardPage({ view, loading, code, go, notify }) {
               <div><small>Koleksi</small><b>#{String(view.number).padStart(3, '0')}</b></div>
             </div>
 
+            {/* Panduan & Misi EXP */}
+            <div className="cp-exp-guide-box">
+              <div className="cp-exp-guide-head">
+                <span className="cp-eyebrow" style={{ color: 'var(--gold)' }}><Zap size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} /> PANDUAN EXP & MISI</span>
+                {isEventMode && <span className="badge-boost">2X BOOSTER AKTIF</span>}
+              </div>
+              <div className="cp-exp-guide-list">
+                <div className="cp-exp-guide-item">
+                  <span>📱 Tap kartu fisik (pengunjung unik)</span>
+                  <b>{isEventMode ? '+20 EXP' : '+10 EXP'}</b>
+                </div>
+                <div className="cp-exp-guide-item">
+                  <span>💾 Simpan kontak (.vcf)</span>
+                  <b>{isEventMode ? '+30 EXP' : '+15 EXP'}</b>
+                </div>
+                <div className="cp-exp-guide-item">
+                  <span>🤝 Tukar kontak (buku tamu)</span>
+                  <b>{isEventMode ? '+50 EXP' : '+25 EXP'}</b>
+                </div>
+                <div className="cp-exp-guide-item">
+                  <span>🔥 Daily Streak 3+ / 7+ hari</span>
+                  <b>+50 / +150 EXP</b>
+                </div>
+                <div className="cp-exp-guide-item">
+                  <span>⭐ Profil lengkap (avatar, bio, medsos, portofolio)</span>
+                  <b>+100 EXP</b>
+                </div>
+              </div>
+            </div>
+
             {/* Bagian Pencapaian & Lencana */}
             <div className="cp-badges-section">
               <div className="cp-badges-head">
@@ -477,6 +632,10 @@ export default function CardPage({ view, loading, code, go, notify }) {
                       {b.icon === 'Zap' && <Zap size={16} />}
                       {b.icon === 'ShieldCheck' && <ShieldCheck size={16} />}
                       {b.icon === 'Sparkles' && <Sparkles size={16} />}
+                      {b.icon === 'Download' && <Download size={16} />}
+                      {b.icon === 'Users' && <Users size={16} />}
+                      {b.icon === 'Award' && <Award size={16} />}
+                      {b.icon === 'Rocket' && <Rocket size={16} />}
                     </div>
                     <div className="cp-badge-info">
                       <b>{b.label}</b>

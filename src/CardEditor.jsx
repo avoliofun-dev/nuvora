@@ -6,7 +6,7 @@ import ImageField from './ImageUpload.jsx';
 
 const SWATCHES = ['#f4c16b', '#55a9ff', '#c084fc', '#ff647c', '#5be0ae', '#f0f4f8'];
 const httpOk = v => !v || /^https?:\/\/\S+$/i.test(v);
-const TABS = ['Tampilan kartu', 'Bagian tampil', 'Data tap'];
+const TABS = ['Tampilan kartu', 'Bagian tampil', 'Data tap', 'Buku tamu'];
 const SECTIONS = [['profile', 'Profil', 'Foto, jabatan, perusahaan, lokasi, dan bio'], ['experience', 'Pengalaman', 'Riwayat kerja dan pencapaian'], ['contact', 'Kontak & sosial', 'Email, telepon, website, dan tautan sosial'], ['stats', 'Statistik', 'Level, EXP, dan riwayat kartu']];
 
 export default function CardEditor({ supabase, auth, notify, go, cardCode }) {
@@ -20,6 +20,9 @@ export default function CardEditor({ supabase, auth, notify, go, cardCode }) {
   const [taps, setTaps] = useState(null);
   const [tapError, setTapError] = useState(null);
   const [tapLoading, setTapLoading] = useState(false);
+  const [leads, setLeads] = useState(null);
+  const [leadsLoading, setLeadsLoading] = useState(false);
+  const [leadsError, setLeadsError] = useState(null);
   const previewRef = useRef(null);
 
   const uid = auth.user && auth.user.id;
@@ -76,9 +79,26 @@ export default function CardEditor({ supabase, auth, notify, go, cardCode }) {
     });
   }
 
+  function loadLeads() {
+    if (!card || leadsLoading) return;
+    setLeadsLoading(true);
+    setLeadsError(null);
+    supabase.rpc('get_card_leads', { p_card_id: card.id }).then(({ data, error }) => {
+      setLeadsLoading(false);
+      if (error) {
+        supabase.from('card_actions').select('*').eq('card_id', card.id).eq('action_type', 'lead_exchange').order('created_at', { ascending: false }).then(res => {
+          if (res.error) setLeadsError('Gagal memuat buku tamu: ' + (error.message || res.error.message));
+          else setLeads(res.data || []);
+        });
+      } else {
+        setLeads(data || []);
+      }
+    });
+  }
+
   useEffect(() => {
-    if (tab !== 'Data tap' || !card || taps || tapLoading || tapError) return;
-    loadTaps();
+    if (tab === 'Data tap' && card && !taps && !tapLoading && !tapError) loadTaps();
+    if (tab === 'Buku tamu' && card && !leads && !leadsLoading) loadLeads();
   }, [tab, card && card.id]);
 
   const setStyle = patch => setDraft(d => ({ ...d, style: { ...d.style, ...patch } }));
@@ -175,6 +195,10 @@ export default function CardEditor({ supabase, auth, notify, go, cardCode }) {
               <input type="checkbox" checked={st.holo !== false} onChange={e => setStyle({ holo: e.target.checked })} /></label>
             <label className="ce-toggle"><span>Tampilkan jumlah tap di halaman publik<small>Jika dimatikan, pengunjung tidak melihat total tap.</small></span>
               <input type="checkbox" checked={st.show_taps !== false} onChange={e => setStyle({ show_taps: e.target.checked })} /></label>
+            <label className="ce-toggle" style={{ border: '1px solid rgba(244,193,107,.35)', background: 'rgba(244,193,107,.06)', borderRadius: 8, padding: '10px 14px' }}>
+              <span><b style={{ color: 'var(--gold)' }}>🎪 Mode Acara / Networking Booster (2x EXP)</b>
+                <small>Gandakan perolehan EXP (2x) dari tap dan aksi interaksi selama kamu menghadiri acara, seminar, atau pameran!</small></span>
+              <input type="checkbox" checked={Boolean(st.event_mode)} onChange={e => setStyle({ event_mode: e.target.checked })} /></label>
             <div className="ce-nfc-tool">
               <div className="ce-nfc-info">
                 <b><Nfc size={15} /> Tulis ke Kartu Fisik NFC</b>
@@ -239,6 +263,44 @@ export default function CardEditor({ supabase, auth, notify, go, cardCode }) {
             <p className="muted" style={{ marginTop: 14 }}>Identitas pengunjung tidak disimpan; hanya hash harian anonim, jenis browser, dan jumlah tap.</p>
             <button className="btn btn-ghost small" style={{marginTop:8}} onClick={loadTaps}>↻ Refresh data</button>
           </>)}
+
+          {tab === 'Buku tamu' && (!card ? <p className="muted">Belum ada kartu.</p> : leadsLoading ? (
+            <div className="ce-tap-loading"><span className="tap-spinner"/><p className="muted">Memuat buku tamu…</p></div>
+          ) : leadsError ? (
+            <div className="ce-tap-error">
+              <div className="notice" style={{marginBottom:16}}>{leadsError}</div>
+              <button className="btn btn-ghost small" onClick={loadLeads}>↻ Coba lagi</button>
+            </div>
+          ) : !leads || leads.length === 0 ? (
+            <div className="ce-leads-empty" style={{ padding: '24px 0', textAlign: 'center' }}>
+              <p className="muted">Belum ada pengunjung yang meninggalkan kontak di kartu <b>{card.code}</b>.</p>
+              <small style={{ color: 'var(--muted)', fontSize: 12 }}>Saat pengunjung membuka kartu fisikmu dan mengisi formulir "Tukar Kontak", nomor dan nama mereka akan muncul otomatis di sini.</small>
+            </div>
+          ) : (
+            <div className="ce-leads-list" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <b style={{ fontSize: 14 }}>Daftar Kontak Pengunjung ({leads.length})</b>
+                <button className="btn btn-ghost small" onClick={loadLeads}>↻ Segarkan</button>
+              </div>
+              {leads.map((l, i) => {
+                const m = l.meta || {};
+                const name = m.name || 'Pengunjung';
+                const phone = m.phone || '';
+                const note = m.note || '';
+                const cleanPhone = phone.replace(/[^\d+]/g, '');
+                return (
+                  <div key={l.id || i} style={{ border: '1px solid var(--border)', background: 'rgba(255,255,255,.02)', borderRadius: 10, padding: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                    <div>
+                      <b style={{ display: 'block', fontSize: 14, color: 'var(--text)' }}>{name}</b>
+                      {phone && <a href={`https://wa.me/${cleanPhone.replace('+', '')}`} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--gold)', textDecoration: 'none', display: 'inline-block', marginTop: 3 }}>📱 {phone} (Hubungi via WA)</a>}
+                      {note && <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--muted)', fontStyle: 'italic' }}>"{note}"</p>}
+                    </div>
+                    <small className="muted" style={{ fontSize: 11, whiteSpace: 'nowrap' }}>{fmtDate(l.created_at)}</small>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </div>
 
         <aside className="ce-preview">

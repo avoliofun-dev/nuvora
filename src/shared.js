@@ -24,12 +24,22 @@ export const BADGES = [
   { id: 'influencer', label: 'Influencer', icon: 'Zap', desc: 'Mencapai 50 kunjungan unik', req: '50 tap unik', minTaps: 50, exp: 150 },
   { id: 'centurion', label: 'Centurion', icon: 'Crown', desc: 'Mencapai 100 kunjungan unik', req: '100 tap unik', minTaps: 100, exp: 300 },
   { id: 'streak_3', label: 'Fire Streak', icon: 'Flame', desc: 'Kartu di-tap 3 hari berturut-turut', req: 'Streak 3 hari', minStreak: 3, exp: 50 },
-  { id: 'streak_7', label: 'Master Networker', icon: 'Flame', desc: 'Kartu di-tap 7 hari berturut-turut', req: 'Streak 7 hari', minStreak: 7, exp: 150 }
+  { id: 'streak_7', label: 'Master Networker', icon: 'Flame', desc: 'Kartu di-tap 7 hari berturut-turut', req: 'Streak 7 hari', minStreak: 7, exp: 150 },
+  { id: 'vcard', label: 'Digital Rolodex', icon: 'Download', desc: 'Kontakmu berhasil disimpan pengunjung', req: '1x simpan vCard', minVcards: 1, exp: 15 },
+  { id: 'lead', label: 'Buku Tamu', icon: 'Users', desc: 'Mendapatkan kontak dari pengunjung', req: '1x tukar kontak', minLeads: 1, exp: 25 },
+  { id: 'profile_master', label: 'Identitas Emas', icon: 'Award', desc: 'Melengkapi seluruh informasi profil & portofolio', req: 'Profil 100%', minProfile: true, exp: 100 },
+  { id: 'event_turbo', label: 'Networking Pro', icon: 'Rocket', desc: 'Mengaktifkan Mode Acara untuk boost 2x EXP', req: 'Mode Acara aktif', minEvent: true, exp: 50 }
 ];
 
-export function getCardBadges(taps = 0, streak = 0) {
+export function getCardBadges(taps = 0, streak = 0, extra = {}) {
   const t = Number(taps) || 0;
   const s = Number(streak) || 0;
+  const actions = extra.actions || {};
+  const vcards = Number(actions.vcards || extra.vcards || 0);
+  const leads = Number(actions.leads || extra.leads || 0);
+  const profileComplete = Boolean(extra.profileComplete);
+  const eventMode = Boolean(extra.eventMode);
+
   return BADGES.map(b => {
     let unlocked = false;
     let progress = 0;
@@ -39,7 +49,20 @@ export function getCardBadges(taps = 0, streak = 0) {
     } else if (b.minStreak) {
       unlocked = s >= b.minStreak;
       progress = Math.min(100, Math.round((s / b.minStreak) * 100));
+    } else if (b.minVcards) {
+      unlocked = vcards >= b.minVcards;
+      progress = unlocked ? 100 : Math.round((vcards / b.minVcards) * 100);
+    } else if (b.minLeads) {
+      unlocked = leads >= b.minLeads;
+      progress = unlocked ? 100 : Math.round((leads / b.minLeads) * 100);
+    } else if (b.minProfile) {
+      unlocked = profileComplete;
+      progress = unlocked ? 100 : 50;
+    } else if (b.minEvent) {
+      unlocked = eventMode;
+      progress = unlocked ? 100 : 0;
     }
     return { ...b, unlocked, progress };
   });
 }
+
