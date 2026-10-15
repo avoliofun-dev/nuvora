@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowDown, ArrowUp, Eye, EyeOff, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Eye, EyeOff, Plus, Trash2, Crown, Zap, ShieldCheck } from 'lucide-react';
 import { socialPlatforms, normalizeUrl } from './shared.js';
 import ImageField from './ImageUpload.jsx';
 
@@ -14,6 +14,7 @@ export default function ProfilePage({ supabase, auth, user, notify, go, onSaved 
   const [pf, setPf] = useState(emptyPf);
   const [socials, setSocials] = useState([]);
   const [exps, setExps] = useState([]);
+  const [cardStats, setCardStats] = useState(null);
   const [loaded, setLoaded] = useState({ socials: [], exps: [] });
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -35,6 +36,9 @@ export default function ProfilePage({ supabase, auth, user, notify, go, onSaved 
         const d = p.data;
         setPf({ name: d.display_name || '', username: d.username || '', bio: d.bio || '', location: d.location || '', website: d.website_url || '', headline: d.headline || '', company: d.company || '', public_email: d.public_email || '', public_phone: d.public_phone || '', avatar_url: d.avatar_url || '' });
       }
+      supabase.rpc('member_dashboard').then(({ data, error }) => {
+        if (alive && !error && data) setCardStats(data);
+      }).catch(() => {});
       const s = await supabase.from('profile_socials').select('id,platform,label,url,is_visible,sort_order').eq('profile_id', uid).order('sort_order').order('created_at');
       const e = await supabase.from('profile_experiences').select('id,title,org,start_year,end_year,description').eq('profile_id', uid).order('sort_order').order('start_year', { ascending: false });
       if (!alive) return;
@@ -147,6 +151,36 @@ export default function ProfilePage({ supabase, auth, user, notify, go, onSaved 
         <h1 style={{ fontSize: 'clamp(28px,3.8vw,40px)', margin: '10px 0' }}>Pengaturan & Profil <em>member.</em></h1>
         <p className="muted">Data di sini dibagikan ke semua kartumu. Lengkapi profil dan tautan sosial agar kartu digitalmu tampil maksimal.</p>
       </div>
+
+      {cardStats && (
+        <div className="panel pf-stats-banner">
+          <div className="pf-stats-left">
+            <span className="eyebrow" style={{ color: 'var(--gold)' }}>HASIL TAP & AKTIVITAS KARTU</span>
+            <div className="pf-stats-numbers">
+              <div className="pf-stat-item">
+                <span className="pf-stat-label"><Eye size={14} /> Total Tap</span>
+                <strong className="pf-stat-val gold">{cardStats.total_taps ?? 0}</strong>
+              </div>
+              <div className="pf-stat-sep" />
+              <div className="pf-stat-item">
+                <span className="pf-stat-label"><Crown size={14} /> Level</span>
+                <strong className="pf-stat-val">LV {cardStats.top_level ?? 1}</strong>
+              </div>
+              <div className="pf-stat-sep" />
+              <div className="pf-stat-item">
+                <span className="pf-stat-label"><Zap size={14} /> EXP</span>
+                <strong className="pf-stat-val">{cardStats.total_exp ?? 0}</strong>
+              </div>
+            </div>
+          </div>
+          <div className="pf-stats-actions">
+            <button type="button" className="btn btn-ghost small" onClick={() => go('my-cards')}>Kartu saya ({cardStats.card_count ?? 0})</button>
+            {cardStats.cards && cardStats.cards[0] && (
+              <button type="button" className="btn btn-gold small" onClick={() => go('card-editor', cardStats.cards[0].code)}>Studio & Data tap</button>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="profile-grid-2col">
         {/* Kolom Kiri: Identitas & Profesional */}

@@ -29,9 +29,11 @@
 | 2026-10-13 | Build produksi sukses (✓ 1677 modules, exit 0) | ✅ Selesai |
 | 2026-10-13 | Rebrand nama web ke **Dhiraya** di seluruh UI & metadata | ✅ Selesai |
 | 2026-10-13 | Penguatan SEO: Open Graph, Twitter Cards, Schema JSON-LD, Sitemap & robots.txt | ✅ Selesai |
+| 2026-10-15 | Perbaikan tap kartu: catat kunjungan otomatis, tampilkan hasil tap di profil kartu publik & profil member | ✅ Selesai |
 
 ## Catatan teknis penting
 - Fungsi `member_card_taps(uuid)` ada di `supabase_patch_v5.sql`. Jika data tap kosong/error, jalankan patch tersebut di Supabase SQL Editor.
+- Patch `supabase_patch_v7_tap_fix.sql` menyediakan fungsi `record_card_tap()` dengan izin anon/authenticated sehingga tap kartu NFC tercatat secara langsung dan bertambah otomatis.
 - Git diinisialisasi di root proyek. Commit pertama: `07a2427`.
 - Dev server berjalan di http://localhost:5173/ (task background).
 

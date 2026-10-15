@@ -11,6 +11,7 @@ import ProfilePage from './ProfilePage.jsx';
 import ImageField from './ImageUpload.jsx';
 
 const initialOrders=[];
+function getVisitorHash(){try{let vid=localStorage.getItem('dhiraya_vid');if(!vid||vid.length<32||vid.length>128){const r=Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b=>b.toString(16).padStart(2,'0')).join('');vid=(r+Date.now().toString(16)+Math.random().toString(36).slice(2)).slice(0,48).padEnd(32,'0');localStorage.setItem('dhiraya_vid',vid)}return vid}catch{return '0123456789abcdef0123456789abcdef'}}
 const pageFromPath=()=>location.pathname.startsWith('/c/')?'card':(location.pathname.replace(/^\//,'').split('/')[0]||'home');
 const codeFromPath=()=>location.pathname.startsWith('/c/')?decodeURIComponent(location.pathname.split('/')[2]||'').toUpperCase()||'NRD-0001':'NRD-0001';
 function friendlyAuthError(e){const m=(e&&e.message)||String(e);
@@ -80,7 +81,7 @@ function App(){
   return()=>{alive=false}
  },[page,auth]);
 
- // Halaman kartu publik: ambil dari database, catat kunjungan (opsional)
+ // Halaman kartu publik: ambil dari database, catat kunjungan
  useEffect(()=>{
   if(page!=='card')return;
   let alive=true;setCardLoading(true);setCardView(null);
@@ -88,10 +89,43 @@ function App(){
    let view=null;
    if(supabase){
     const {data}=await supabase.rpc('get_public_card',{p_code:cardCode});view=data||null;
-    if(view)fetch('/api/visit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:cardCode,ref:document.referrer||''})}).catch(()=>{});
    }
-   if(!view&&cardCode==='NRD-0001')view=DEMO_CARD;
+   if(!view&&cardCode==='NRD-0001'){
+     const demoTaps=Number(localStorage.getItem('dhiraya_demo_taps')||48)+1;
+     localStorage.setItem('dhiraya_demo_taps',demoTaps);
+     view={...DEMO_CARD,taps:demoTaps};
+   }
    if(alive){setCardView(view);setCardLoading(false)}
+
+   // Catat tap/kunjungan kartu fisik NFC
+   if(view&&cardCode!=='NRD-0001'){
+     (async()=>{
+       let recorded=false;
+       try{
+         const r=await fetch('/api/visit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:cardCode,ref:document.referrer||'',vid:getVisitorHash()})});
+         if(r.ok){
+           const res=await r.json().catch(()=>null);
+           if(res&&res.ok){
+             recorded=true;
+             if(res.data&&res.data.length&&res.data[0].out_taps!=null){
+               if(alive)setCardView(v=>v?{...v,taps:res.data[0].out_taps,exp:res.data[0].out_exp??v.exp,level:res.data[0].out_level??v.level}:v);
+             }else{
+               if(alive)setCardView(v=>v?{...v,taps:(Number(v.taps)||0)+1}:v);
+             }
+           }
+         }
+       }catch{}
+       if(!recorded&&supabase){
+         try{
+           const {data:tapData,error:tapErr}=await supabase.rpc('record_card_tap',{p_card_code:cardCode,p_visitor_hash:getVisitorHash()});
+           if(!tapErr&&tapData&&tapData.length){
+             const row=tapData[0];
+             if(alive)setCardView(v=>v?{...v,taps:row.out_taps!=null?row.out_taps:((Number(v.taps)||0)+1),exp:row.out_exp??v.exp,level:row.out_level??v.level}:v);
+           }
+         }catch{}
+       }
+     })();
+   }
   })();
   return()=>{alive=false}
  },[page,cardCode]);

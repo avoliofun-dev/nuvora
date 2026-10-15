@@ -20,9 +20,9 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ ok: false });
 
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const secret = process.env.VISITOR_HASH_SECRET;
-  if (!url || !key || !secret || secret.length < 32) return res.status(200).json({ ok: false, reason: 'not_configured' });
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+  const secret = process.env.VISITOR_HASH_SECRET || 'dhiraya-card-visit-secret-salt-2026-min32chars';
+  if (!url || !key) return res.status(200).json({ ok: false, reason: 'not_configured' });
 
   const code = String((req.body && req.body.code) || '').toUpperCase().trim();
   if (!/^[A-Z0-9][A-Z0-9-]{2,39}$/.test(code)) return res.status(400).json({ ok: false });
@@ -44,13 +44,21 @@ export default async function handler(req, res) {
   const hash = crypto.createHmac('sha256', secret).update(`${ip}|${ua}|${code}|${day}`).digest('hex');
 
   try {
-    const r = await fetch(`${url.replace(/\/$/, '')}/rest/v1/rpc/register_card_visit`, {
+    let r = await fetch(`${url.replace(/\/$/, '')}/rest/v1/rpc/record_card_tap`, {
       method: 'POST',
       headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_card_code: code, p_visitor_hash: hash, p_user_agent_family: family, p_referrer_domain: refHost })
     });
-    return res.status(200).json({ ok: r.ok });
-  } catch {
-    return res.status(200).json({ ok: false });
+    if (!r.ok) {
+      r = await fetch(`${url.replace(/\/$/, '')}/rest/v1/rpc/register_card_visit`, {
+        method: 'POST',
+        headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_card_code: code, p_visitor_hash: hash, p_user_agent_family: family, p_referrer_domain: refHost })
+      });
+    }
+    const data = await r.json().catch(() => null);
+    return res.status(200).json({ ok: r.ok, data });
+  } catch (err) {
+    return res.status(200).json({ ok: false, error: err.message });
   }
 }

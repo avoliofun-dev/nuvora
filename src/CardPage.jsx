@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback, useImperativeHandle, f
 import {
   ShieldCheck, ArrowRight, Rotate3D, Layers, Share2, Pencil, ChevronLeft, ChevronRight,
   Instagram, Globe, ExternalLink, Mail, Phone, MapPin, Briefcase, Download, Sparkles,
-  MessageCircle, Send, Link2
+  MessageCircle, Send, Link2, Eye, Crown, Zap
 } from 'lucide-react';
 import { rarities, fmtDate } from './shared.js';
 
@@ -319,6 +319,13 @@ export default function CardPage({ view, loading, code, go, notify }) {
               <div className="cp-tags">
                 {owner.company && <span><Briefcase size={13} /> {owner.company}</span>}
                 {owner.location && <span><MapPin size={13} /> {owner.location}</span>}
+                {showTaps && <span className="cp-tag-tap"><Eye size={13} /> {view.taps} tap</span>}
+                <span><Crown size={13} /> LV {view.level}</span>
+              </div>
+              <div className="cp-profile-stats">
+                {showTaps && <div><small>Total Tap</small><b>{view.taps}</b></div>}
+                <div><small>Level</small><b>LV {view.level}</b></div>
+                <div><small>EXP</small><b>{view.exp}</b></div>
               </div>
               {owner.bio ? <p className="cp-bio">{owner.bio}</p> : <p className="cp-muted">Pemilik belum menulis bio.</p>}
               <button className="btn btn-gold cp-cta" onClick={() => downloadVcf(owner, owner.display_name, view.code)}><Download size={15} /> Simpan kontak</button>
