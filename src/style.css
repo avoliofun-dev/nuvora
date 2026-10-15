@@ -267,6 +267,23 @@
 .pf-stats-actions{display:flex;gap:8px;flex-wrap:wrap}
 @media(max-width:640px){.pf-stats-banner{flex-direction:column;align-items:flex-start}.pf-stats-actions{width:100%}.pf-stats-actions button{flex:1}}
 
+/* Layout fl-badge (ID Badge) */
+.fl-badge .hc-bg{filter:brightness(.85)}
+.fl-badge .hc-bottom{bottom:auto;top:38%;display:grid;gap:8px}
+.fl-badge .hc-bottom b{font-size:clamp(22px,7vw,30px);line-height:1.15;border-left:3px solid var(--accent);padding-left:10px}
+.fl-badge .hc-meta{margin-top:12px;padding-top:8px;border-top:1px dashed rgba(255,255,255,.2)}
+
+/* Tap hint under HoloCard */
+.cp-tap-hint{display:block;margin:4px auto 0;font-size:10px;color:rgba(255,255,255,.5);letter-spacing:.4px;text-align:center;text-transform:uppercase}
+
+/* NFC Tool in Studio (Member) */
+.ce-nfc-tool{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px;border:1px solid rgba(244,193,107,.25);border-radius:12px;background:rgba(244,193,107,.05);margin:14px 0}
+.ce-nfc-info{display:grid;gap:3px}
+.ce-nfc-info b{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--gold)}
+.ce-nfc-info p{margin:0;font-size:11px;color:#8fa0b1;line-height:1.5}
+.ce-nfc-info code{color:var(--gold);background:rgba(0,0,0,.3);padding:2px 5px;border-radius:4px;font-size:10px}
+@media(max-width:540px){.ce-nfc-tool{flex-direction:column;align-items:flex-start}.ce-nfc-tool button{width:100%}}
+
 
 /* ========================================================
    NAVIGASI MODERN & WEB APP RESPONSIVE (CARDORA v6.1)

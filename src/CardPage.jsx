@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback, useImperativeHandle, f
 import {
   ShieldCheck, ArrowRight, Rotate3D, Layers, Share2, Pencil, ChevronLeft, ChevronRight,
   Instagram, Globe, ExternalLink, Mail, Phone, MapPin, Briefcase, Download, Sparkles,
-  MessageCircle, Send, Link2, Eye, Crown, Zap
+  MessageCircle, Send, Link2, Eye, Crown, Zap, Nfc
 } from 'lucide-react';
 import { rarities, fmtDate } from './shared.js';
 
@@ -34,8 +34,33 @@ const monthYear = d => d ? new Date(d).toLocaleDateString('id-ID', { month: 'lon
 const FONTS = {
   modern: "Manrope,'DM Sans',system-ui,sans-serif",
   serif: "Georgia,'Times New Roman',serif",
-  mono: "ui-monospace,SFMono-Regular,Menlo,monospace"
+  mono: "ui-monospace,SFMono-Regular,Menlo,monospace",
+  display: "'Outfit','DM Sans',system-ui,sans-serif",
+  retro: "'Courier New',Courier,monospace"
 };
+
+export async function writeNfcCard(code, notify) {
+  if (!('NDEFReader' in window)) {
+    notify('Web NFC tidak didukung di browser ini. Buka lewat Chrome di Android (HTTPS).');
+    return false;
+  }
+  const url = location.origin + '/c/' + encodeURIComponent(code);
+  if (!window.confirm('Tulis URL kartu ini ke chip NFC?\n\n' + url + '\n\nTempelkan kartu NFC ke bagian belakang HP.')) return false;
+  notify('Tempelkan kartu NFC ke bagian belakang HP…');
+  try {
+    const ndef = new window.NDEFReader();
+    await ndef.write({ records: [{ recordType: 'url', data: url }] }, { overwrite: true });
+    notify('Berhasil menulis URL ' + code + ' ke chip NFC!');
+    return true;
+  } catch (err) {
+    if (err && err.name === 'NotAllowedError') {
+      notify('Izin NFC ditolak atau NFC di pengaturan HP belum aktif.');
+    } else {
+      notify('Gagal menulis NFC: ' + (err.message || err));
+    }
+    return false;
+  }
+}
 
 function downloadVcf(owner, name, code) {
   const esc = v => String(v || '').replace(/[\\;,]/g, m => '\\' + m).replace(/\r?\n/g, '\\n');
@@ -103,17 +128,38 @@ export const HoloCard = forwardRef(function HoloCard({ view, r, art, accent, st,
 
   useEffect(() => { apply(); const c = s.current; return () => cancelAnimationFrame(c.raf); }, [apply]);
 
+  const moved = useRef(false);
+
+  // Efek kemiringan giroskop di HP (deviceorientation)
+  useEffect(() => {
+    if (mode3d) return;
+    const handleOrientation = e => {
+      if (s.current.drag) return;
+      if (e.gamma != null && e.beta != null) {
+        const tiltX = Math.max(-20, Math.min(20, (e.beta - 45) * 0.45));
+        const tiltY = Math.max(-25, Math.min(25, e.gamma * 0.55));
+        s.current.x = tiltX;
+        s.current.y = tiltY;
+        apply();
+      }
+    };
+    window.addEventListener('deviceorientation', handleOrientation, { passive: true });
+    return () => window.removeEventListener('deviceorientation', handleOrientation);
+  }, [mode3d, apply]);
+
   const onDown = e => {
-    if (!mode3d) return;
+    moved.current = false;
+    if (!mode3d) { s.current.lx = e.clientX; s.current.ly = e.clientY; return; }
     const c = s.current;
     c.drag = true; c.target = null; c.lx = e.clientX; c.ly = e.clientY; c.vx = c.vy = 0;
     try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* abaikan */ }
   };
   const onMove = e => {
     const c = s.current;
+    const dx = e.clientX - c.lx, dy = e.clientY - c.ly;
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) moved.current = true;
     if (mode3d) {
       if (!c.drag) return;
-      const dx = e.clientX - c.lx, dy = e.clientY - c.ly;
       c.lx = e.clientX; c.ly = e.clientY;
       c.y += dx * 0.6; c.x = Math.max(-38, Math.min(38, c.x - dy * 0.4));
       c.vy = dx * 0.6; c.vx = -dy * 0.4;
@@ -125,7 +171,16 @@ export const HoloCard = forwardRef(function HoloCard({ view, r, art, accent, st,
       apply();
     }
   };
-  const onUp = () => { const c = s.current; if (mode3d && c.drag) { c.drag = false; kick(); } };
+  const onUp = () => {
+    const c = s.current;
+    if (mode3d && c.drag) { c.drag = false; kick(); }
+    else if (!mode3d && !moved.current) {
+      // Ketuk kartu di layar HP / klik untuk membalik sisi
+      c.vx = c.vy = 0; c.drag = false;
+      c.target = Math.round(c.y / 180) * 180 + 180;
+      kick();
+    }
+  };
   const onLeave = () => { if (!mode3d) { const c = s.current; c.target = Math.round(c.y / 180) * 180; kick(); } };
 
   const owner = view.owner;
@@ -133,11 +188,20 @@ export const HoloCard = forwardRef(function HoloCard({ view, r, art, accent, st,
   const sub = owner?.headline || view.title || '';
   const layout = st.layout || 'classic';
   const bg = st.bg || 'art';
-  const frontBg = bg === 'art'
-    ? { backgroundImage: `linear-gradient(180deg,rgba(0,0,0,.05) 0%,rgba(2,8,14,.35) 55%,rgba(2,8,14,.96) 100%),${cssUrl(art)}` }
-    : bg === 'gradient'
-      ? { backgroundImage: 'radial-gradient(circle at 18% 12%,color-mix(in srgb,var(--accent) 55%,transparent),transparent 55%),radial-gradient(circle at 88% 92%,color-mix(in srgb,var(--rarity) 48%,transparent),transparent 58%),linear-gradient(160deg,#10202f,#050b12)' }
-      : { background: 'linear-gradient(160deg,#111c28,#070e15)' };
+  let frontBg;
+  if (bg === 'art') {
+    frontBg = { backgroundImage: `linear-gradient(180deg,rgba(0,0,0,.05) 0%,rgba(2,8,14,.35) 55%,rgba(2,8,14,.96) 100%),${cssUrl(art)}` };
+  } else if (bg === 'gradient') {
+    frontBg = { backgroundImage: 'radial-gradient(circle at 18% 12%,color-mix(in srgb,var(--accent) 55%,transparent),transparent 55%),radial-gradient(circle at 88% 92%,color-mix(in srgb,var(--rarity) 48%,transparent),transparent 58%),linear-gradient(160deg,#10202f,#050b12)' };
+  } else if (bg === 'mesh') {
+    frontBg = { backgroundImage: 'linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px), radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 75%), linear-gradient(160deg, #0e1e2f, #04080e)', backgroundSize: '24px 24px, 24px 24px, 100% 100%, 100% 100%' };
+  } else if (bg === 'carbon') {
+    frontBg = { backgroundImage: 'radial-gradient(black 15%, transparent 16%), radial-gradient(black 15%, transparent 16%), linear-gradient(135deg, #18222e 0%, #080c10 100%)', backgroundSize: '12px 12px, 12px 12px, 100% 100%', backgroundPosition: '0 0, 6px 6px, 0 0' };
+  } else if (bg === 'gold') {
+    frontBg = { backgroundImage: 'radial-gradient(ellipse at 30% 20%, rgba(244,193,107,.4), transparent 60%), radial-gradient(circle at 80% 80%, rgba(200,140,50,.3), transparent 50%), linear-gradient(145deg, #1c1810, #090805)' };
+  } else {
+    frontBg = { background: 'linear-gradient(160deg,#111c28,#070e15)' };
+  }
 
   return (
     <div
@@ -282,6 +346,7 @@ export default function CardPage({ view, loading, code, go, notify }) {
           ? <button className="cp-pill" onClick={() => go('member')}><ChevronLeft size={15} /> Dashboard</button>
           : <span className="cp-word">✦ dhiraya</span>}
         <div className="cp-actions">
+          {view.is_owner && <button className="cp-icon" onClick={() => writeNfcCard(view.code, notify)} aria-label="Tulis ke chip NFC" title="Tulis ke chip NFC"><Nfc size={16} /></button>}
           <button className="cp-icon" onClick={() => setMode3d(true)} aria-label="Mode 3D" title="Mode 3D"><Rotate3D size={17} /></button>
           <button className="cp-icon" onClick={share} aria-label="Bagikan" title="Bagikan"><Share2 size={17} /></button>
           {view.is_owner && <button className="cp-icon gold" onClick={() => go('card-editor', view.code)} aria-label="Edit kartu" title="Edit kartu"><Pencil size={16} /></button>}
@@ -295,9 +360,11 @@ export default function CardPage({ view, loading, code, go, notify }) {
           <div className="cp-card-wrap">
             <HoloCard ref={card2d} view={view} r={r} art={art} accent={accent} st={st} mode3d={false} qr={qr} />
           </div>
+          <small className="cp-tap-hint">Ketuk kartu untuk membalik sisi</small>
           <div className="cp-card-tools">
             <button className="cp-chip" onClick={() => card2d.current?.flip()}><Layers size={14} /> Balik kartu</button>
             <button className="cp-chip" onClick={() => setMode3d(true)}><Rotate3D size={14} /> Mode 3D</button>
+            {view.is_owner && <button className="cp-chip" onClick={() => writeNfcCard(view.code, notify)}><Nfc size={14} /> Tulis NFC</button>}
           </div>
           {slideNames.length > 1 && <button className="cp-hint" onClick={() => goTo(1)}>Geser untuk melihat {slideNames[1].toLowerCase()} <ChevronRight size={15} /></button>}
         </section>

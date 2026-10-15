@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, Eye, Layers, RotateCcw, UserRound } from 'lucide-react';
+import { ChevronLeft, Eye, Layers, RotateCcw, UserRound, Nfc } from 'lucide-react';
 import { rarities, fmtDate } from './shared.js';
-import { HoloCard } from './CardPage.jsx';
+import { HoloCard, writeNfcCard } from './CardPage.jsx';
 import ImageField from './ImageUpload.jsx';
 
 const SWATCHES = ['#f4c16b', '#55a9ff', '#c084fc', '#ff647c', '#5be0ae', '#f0f4f8'];
@@ -14,6 +14,7 @@ export default function CardEditor({ supabase, auth, notify, go, cardCode }) {
   const [cards, setCards] = useState(null);
   const [sel, setSel] = useState('');
   const [busy, setBusy] = useState(false);
+  const [nfcBusy, setNfcBusy] = useState(false);
   const [draft, setDraft] = useState({ display_name: '', title: '', front_image: '', style: {} });
   const [profInfo, setProfInfo] = useState({ name: '', headline: '' });
   const [taps, setTaps] = useState(null);
@@ -145,7 +146,7 @@ export default function CardEditor({ supabase, auth, notify, go, cardCode }) {
               <label className="ce-field">Judul / tagline<input value={draft.title} maxLength={120} onChange={e => setDraft({ ...draft, title: e.target.value })} placeholder="Mis. Founder & Designer" /></label>
             </div>
             <div className="ce-field">Latar kartu
-              <div className="ce-choices">{[['art', 'Gambar'], ['gradient', 'Gradien'], ['solid', 'Polos']].map(([v, l]) => <button key={v} className={(st.bg || 'art') === v ? 'active' : ''} onClick={() => setStyle({ bg: v })}>{l}</button>)}</div>
+              <div className="ce-choices">{[['art', 'Gambar'], ['gradient', 'Gradien'], ['mesh', 'Cyber Mesh'], ['carbon', 'Karbon'], ['gold', 'Emas'], ['solid', 'Polos']].map(([v, l]) => <button key={v} className={(st.bg || 'art') === v ? 'active' : ''} onClick={() => setStyle({ bg: v })}>{l}</button>)}</div>
             </div>
             {(st.bg || 'art') === 'art' && <>
               {card.status !== 'ACTIVE'
@@ -158,10 +159,10 @@ export default function CardEditor({ supabase, auth, notify, go, cardCode }) {
               {card.print_image && <p className="muted" style={{ fontSize: 11 }}>Foto cetak (yang dipakai di kartu fisik) tersimpan permanen sebagai arsip.</p>}
             </>}
             <div className="ce-field">Tata letak
-              <div className="ce-choices">{[['classic', 'Klasik'], ['minimal', 'Minimal'], ['bold', 'Tegas']].map(([v, l]) => <button key={v} className={(st.layout || 'classic') === v ? 'active' : ''} onClick={() => setStyle({ layout: v })}>{l}</button>)}</div>
+              <div className="ce-choices">{[['classic', 'Klasik'], ['minimal', 'Minimal'], ['bold', 'Tegas'], ['badge', 'ID Badge']].map(([v, l]) => <button key={v} className={(st.layout || 'classic') === v ? 'active' : ''} onClick={() => setStyle({ layout: v })}>{l}</button>)}</div>
             </div>
             <div className="ce-field">Gaya huruf
-              <div className="ce-choices">{[['modern', 'Modern'], ['serif', 'Serif'], ['mono', 'Mono']].map(([v, l]) => <button key={v} className={(st.font || 'modern') === v ? 'active' : ''} onClick={() => setStyle({ font: v })}>{l}</button>)}</div>
+              <div className="ce-choices">{[['modern', 'Modern'], ['serif', 'Serif'], ['mono', 'Mono'], ['display', 'Display'], ['retro', 'Retro']].map(([v, l]) => <button key={v} className={(st.font || 'modern') === v ? 'active' : ''} onClick={() => setStyle({ font: v })}>{l}</button>)}</div>
             </div>
             <div className="ce-field">Warna aksen
               <div className="ce-swatches">
@@ -174,6 +175,17 @@ export default function CardEditor({ supabase, auth, notify, go, cardCode }) {
               <input type="checkbox" checked={st.holo !== false} onChange={e => setStyle({ holo: e.target.checked })} /></label>
             <label className="ce-toggle"><span>Tampilkan jumlah tap di halaman publik<small>Jika dimatikan, pengunjung tidak melihat total tap.</small></span>
               <input type="checkbox" checked={st.show_taps !== false} onChange={e => setStyle({ show_taps: e.target.checked })} /></label>
+            <div className="ce-nfc-tool">
+              <div className="ce-nfc-info">
+                <b><Nfc size={15} /> Tulis ke Kartu Fisik NFC</b>
+                <p>Tuliskan tautan <code>/c/{card.code}</code> ke chip NFC fisikmu lewat browser Chrome Android.</p>
+              </div>
+              <button type="button" className="btn btn-ghost small" disabled={nfcBusy} onClick={async () => {
+                setNfcBusy(true);
+                await writeNfcCard(card.code, notify);
+                setNfcBusy(false);
+              }}><Nfc size={14} /> {nfcBusy ? 'Menunggu kartu…' : 'Tulis NFC'}</button>
+            </div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 18 }}>
               <button className="btn btn-gold" onClick={saveCard} disabled={busy}>Simpan tampilan</button>
               <button className="btn btn-ghost" onClick={() => go('card', card.code)}><Eye size={15} /> Lihat halaman kartu</button>

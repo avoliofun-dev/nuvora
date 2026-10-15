@@ -11,8 +11,7 @@
 ## Status
 - [x] Tahap 1 — dashboard semua kartu, profil digabung, saklar sembunyi (kode selesai; belum diuji di database nyata)
 - [x] Tahap 2 — upload dari perangkat, foto di form pesanan, editor tautan sosial (kode selesai; belum diuji di browser/HP)
-- [x] Tahap 3 (UI selesai) — Sidebar fix desktop, user popup topbar, profile 2-grid, menu member pindah ke sidebar
-- [ ] Tahap 3 (lanjutan) — setel 3D, swipe, hologram setelah uji di HP; tombol tulis NFC; tema tambahan
+- [x] Tahap 3 — Sidebar desktop, user popup, profile 2-grid, setel 3D, tilt giroskop HP, ketuk balik kartu, tombol tulis Web NFC, tema latar & font baru
 - [ ] Tahap 4 — data tap lebih kaya, pertukaran kontak, notifikasi tap
 - [ ] Tahap 5 — pembayaran online, keamanan & rate limit, uji lintas perangkat, checklist rilis
 
@@ -30,6 +29,7 @@
 | 2026-10-13 | Rebrand nama web ke **Dhiraya** di seluruh UI & metadata | ✅ Selesai |
 | 2026-10-13 | Penguatan SEO: Open Graph, Twitter Cards, Schema JSON-LD, Sitemap & robots.txt | ✅ Selesai |
 | 2026-10-15 | Perbaikan tap kartu: catat kunjungan otomatis, tampilkan hasil tap di profil kartu publik & profil member | ✅ Selesai |
+| 2026-10-15 | Tahap 3 lanjutan: Web NFC writer (Studio & Card Page), kemiringan giroskop HP (deviceorientation), tap-to-flip, tema latar & font baru | ✅ Selesai |
 
 ## Catatan teknis penting
 - Fungsi `member_card_taps(uuid)` ada di `supabase_patch_v5.sql`. Jika data tap kosong/error, jalankan patch tersebut di Supabase SQL Editor.
