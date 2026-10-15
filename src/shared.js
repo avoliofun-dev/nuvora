@@ -17,3 +17,29 @@ export function normalizeUrl(raw,platform){let v=String(raw||'').trim();if(!v)re
  if(/^https?:\/\/\S+$/i.test(v))return v;
  if(/^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(v))return 'https://'+v;
  return null}
+
+export const BADGES = [
+  { id: 'pioneer', label: 'Pionir', icon: 'Sparkles', desc: 'Tap pertama kali berhasil', req: '1 tap unik', minTaps: 1, exp: 20 },
+  { id: 'connector', label: 'Konektor', icon: 'ShieldCheck', desc: 'Mencapai 10 kunjungan unik', req: '10 tap unik', minTaps: 10, exp: 50 },
+  { id: 'influencer', label: 'Influencer', icon: 'Zap', desc: 'Mencapai 50 kunjungan unik', req: '50 tap unik', minTaps: 50, exp: 150 },
+  { id: 'centurion', label: 'Centurion', icon: 'Crown', desc: 'Mencapai 100 kunjungan unik', req: '100 tap unik', minTaps: 100, exp: 300 },
+  { id: 'streak_3', label: 'Fire Streak', icon: 'Flame', desc: 'Kartu di-tap 3 hari berturut-turut', req: 'Streak 3 hari', minStreak: 3, exp: 50 },
+  { id: 'streak_7', label: 'Master Networker', icon: 'Flame', desc: 'Kartu di-tap 7 hari berturut-turut', req: 'Streak 7 hari', minStreak: 7, exp: 150 }
+];
+
+export function getCardBadges(taps = 0, streak = 0) {
+  const t = Number(taps) || 0;
+  const s = Number(streak) || 0;
+  return BADGES.map(b => {
+    let unlocked = false;
+    let progress = 0;
+    if (b.minTaps) {
+      unlocked = t >= b.minTaps;
+      progress = Math.min(100, Math.round((t / b.minTaps) * 100));
+    } else if (b.minStreak) {
+      unlocked = s >= b.minStreak;
+      progress = Math.min(100, Math.round((s / b.minStreak) * 100));
+    }
+    return { ...b, unlocked, progress };
+  });
+}

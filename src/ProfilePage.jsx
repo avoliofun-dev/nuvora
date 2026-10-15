@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowDown, ArrowUp, Eye, EyeOff, Plus, Trash2, Crown, Zap, ShieldCheck } from 'lucide-react';
-import { socialPlatforms, normalizeUrl } from './shared.js';
+import { ArrowDown, ArrowUp, Eye, EyeOff, Plus, Trash2, Crown, Zap, ShieldCheck, Flame, Trophy } from 'lucide-react';
+import { socialPlatforms, normalizeUrl, getCardBadges } from './shared.js';
 import ImageField from './ImageUpload.jsx';
 
 const emptyPf = { username: '', name: '', bio: '', location: '', website: '', headline: '', company: '', public_email: '', public_phone: '', avatar_url: '' };
@@ -152,35 +152,48 @@ export default function ProfilePage({ supabase, auth, user, notify, go, onSaved 
         <p className="muted">Data di sini dibagikan ke semua kartumu. Lengkapi profil dan tautan sosial agar kartu digitalmu tampil maksimal.</p>
       </div>
 
-      {cardStats && (
-        <div className="panel pf-stats-banner">
-          <div className="pf-stats-left">
-            <span className="eyebrow" style={{ color: 'var(--gold)' }}>HASIL TAP & AKTIVITAS KARTU</span>
-            <div className="pf-stats-numbers">
-              <div className="pf-stat-item">
-                <span className="pf-stat-label"><Eye size={14} /> Total Tap</span>
-                <strong className="pf-stat-val gold">{cardStats.total_taps ?? 0}</strong>
-              </div>
-              <div className="pf-stat-sep" />
-              <div className="pf-stat-item">
-                <span className="pf-stat-label"><Crown size={14} /> Level</span>
-                <strong className="pf-stat-val">LV {cardStats.top_level ?? 1}</strong>
-              </div>
-              <div className="pf-stat-sep" />
-              <div className="pf-stat-item">
-                <span className="pf-stat-label"><Zap size={14} /> EXP</span>
-                <strong className="pf-stat-val">{cardStats.total_exp ?? 0}</strong>
+      {cardStats && (() => {
+        const badges = getCardBadges(cardStats.total_taps, cardStats.streak || 0);
+        return (
+          <div className="panel pf-stats-banner">
+            <div className="pf-stats-left">
+              <span className="eyebrow" style={{ color: 'var(--gold)' }}>HASIL TAP & GAMIFIKASI KARTU</span>
+              <div className="pf-stats-numbers">
+                <div className="pf-stat-item">
+                  <span className="pf-stat-label"><Eye size={14} /> Total Tap</span>
+                  <strong className="pf-stat-val gold">{cardStats.total_taps ?? 0}</strong>
+                </div>
+                <div className="pf-stat-sep" />
+                <div className="pf-stat-item">
+                  <span className="pf-stat-label"><Crown size={14} /> Level</span>
+                  <strong className="pf-stat-val">LV {cardStats.top_level ?? 1}</strong>
+                </div>
+                <div className="pf-stat-sep" />
+                <div className="pf-stat-item">
+                  <span className="pf-stat-label"><Zap size={14} /> EXP</span>
+                  <strong className="pf-stat-val">{cardStats.total_exp ?? 0}</strong>
+                </div>
+                <div className="pf-stat-sep" />
+                <div className="pf-stat-item">
+                  <span className="pf-stat-label"><Flame size={14} /> Streak</span>
+                  <strong className="pf-stat-val" style={{ color: '#ff8a50' }}>{cardStats.streak ? `${cardStats.streak} Hari 🔥` : '0 Hari'}</strong>
+                </div>
+                <div className="pf-stat-sep" />
+                <div className="pf-stat-item">
+                  <span className="pf-stat-label"><Trophy size={14} /> Lencana</span>
+                  <strong className="pf-stat-val">{badges.filter(b => b.unlocked).length} Terbuka</strong>
+                </div>
               </div>
             </div>
+            <div className="pf-stats-actions">
+              <button type="button" className="btn btn-ghost small" onClick={() => go('my-cards')}>Kartu saya ({cardStats.card_count ?? 0})</button>
+              {cardStats.cards && cardStats.cards[0] && (
+                <button type="button" className="btn btn-gold small" onClick={() => go('card-editor', cardStats.cards[0].code)}>Studio & Data tap</button>
+              )}
+            </div>
           </div>
-          <div className="pf-stats-actions">
-            <button type="button" className="btn btn-ghost small" onClick={() => go('my-cards')}>Kartu saya ({cardStats.card_count ?? 0})</button>
-            {cardStats.cards && cardStats.cards[0] && (
-              <button type="button" className="btn btn-gold small" onClick={() => go('card-editor', cardStats.cards[0].code)}>Studio & Data tap</button>
-            )}
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       <div className="profile-grid-2col">
         {/* Kolom Kiri: Identitas & Profesional */}

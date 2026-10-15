@@ -2,15 +2,15 @@ import React, { useState, useRef, useEffect, useCallback, useImperativeHandle, f
 import {
   ShieldCheck, ArrowRight, Rotate3D, Layers, Share2, Pencil, ChevronLeft, ChevronRight,
   Instagram, Globe, ExternalLink, Mail, Phone, MapPin, Briefcase, Download, Sparkles,
-  MessageCircle, Send, Link2, Eye, Crown, Zap, Nfc
+  MessageCircle, Send, Link2, Eye, Crown, Zap, Nfc, Flame, Trophy, Award
 } from 'lucide-react';
-import { rarities, fmtDate } from './shared.js';
+import { rarities, fmtDate, getCardBadges } from './shared.js';
 
 // Kartu contoh: hanya tampil untuk /c/NRD-0001 bila kode itu belum ada di database.
 export const DEMO_CARD = {
   demo: true, code: 'NRD-0001', number: 1, rarity: 'LEGENDARY', display_name: 'Narendra',
   title: 'Builder & Kolektor',
-  level: 12, exp: 320, exp_per_level: 500, exp_into_level: 320, taps: 48, style: {}, is_owner: false,
+  level: 12, exp: 320, exp_per_level: 500, exp_into_level: 320, taps: 48, streak: 3, style: {}, is_owner: false,
   created_at: '2026-10-12', activated_at: '2026-10-12', first_visit_at: '2026-10-12',
   owner: {
     display_name: 'Narendra', username: '', location: 'Indonesia', joined_at: '2026-10-12',
@@ -313,6 +313,7 @@ export default function CardPage({ view, loading, code, go, notify }) {
   const events = [['Kartu dibuat', view.created_at], view.activated_at && ['Kartu diaktifkan', view.activated_at], view.first_visit_at && ['Kunjungan unik pertama', view.first_visit_at]].filter(Boolean);
   const showTaps = st.show_taps !== false;
   const hasContact = owner && (owner.public_email || owner.public_phone || socials.length > 0);
+  const badges = getCardBadges(view.taps, view.streak || 0);
 
   const share = async () => {
     const url = location.origin + '/c/' + view.code;
@@ -387,6 +388,7 @@ export default function CardPage({ view, loading, code, go, notify }) {
                 {owner.company && <span><Briefcase size={13} /> {owner.company}</span>}
                 {owner.location && <span><MapPin size={13} /> {owner.location}</span>}
                 {showTaps && <span className="cp-tag-tap"><Eye size={13} /> {view.taps} tap</span>}
+                {view.streak > 0 && <span className="cp-tag-streak"><Flame size={13} /> {view.streak} Hari Streak 🔥</span>}
                 <span><Crown size={13} /> LV {view.level}</span>
               </div>
               <div className="cp-profile-stats">
@@ -456,8 +458,36 @@ export default function CardPage({ view, loading, code, go, notify }) {
             <div className="cp-stats">
               <div><small>Total EXP</small><b>{view.exp}</b></div>
               {showTaps && <div><small>Total tap</small><b>{view.taps}</b></div>}
+              <div><small>Daily Streak</small><b style={{ color: '#ff8a50' }}>{view.streak ? `${view.streak} Hari 🔥` : '0 Hari'}</b></div>
               <div><small>Koleksi</small><b>#{String(view.number).padStart(3, '0')}</b></div>
             </div>
+
+            {/* Bagian Pencapaian & Lencana */}
+            <div className="cp-badges-section">
+              <div className="cp-badges-head">
+                <span className="cp-eyebrow" style={{ color: 'var(--gold)' }}><Trophy size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} /> PENCAPAIAN & LENCANA</span>
+                <span className="muted" style={{ fontSize: 11 }}>{badges.filter(b => b.unlocked).length}/{badges.length} Terbuka</span>
+              </div>
+              <div className="cp-badges-grid">
+                {badges.map(b => (
+                  <div key={b.id} className={`cp-badge-card ${b.unlocked ? 'unlocked' : 'locked'}`} title={b.desc}>
+                    <div className="cp-badge-icon">
+                      {b.icon === 'Flame' && <Flame size={16} />}
+                      {b.icon === 'Crown' && <Crown size={16} />}
+                      {b.icon === 'Zap' && <Zap size={16} />}
+                      {b.icon === 'ShieldCheck' && <ShieldCheck size={16} />}
+                      {b.icon === 'Sparkles' && <Sparkles size={16} />}
+                    </div>
+                    <div className="cp-badge-info">
+                      <b>{b.label}</b>
+                      <small>{b.desc}</small>
+                      <span className="cp-badge-status">{b.unlocked ? '✓ Terbuka' : b.req}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {events.map(([label, date]) => <div className="cp-event" key={label}><span /><b>{label}</b><small>{fmtDate(date)}</small></div>)}
             <p className="cp-muted cp-center-text">Diterbitkan {monthYear(view.activated_at || view.created_at)}{view.demo ? ' · kartu contoh' : ''}</p>
           </div>

@@ -30,10 +30,12 @@
 | 2026-10-13 | Penguatan SEO: Open Graph, Twitter Cards, Schema JSON-LD, Sitemap & robots.txt | ✅ Selesai |
 | 2026-10-15 | Perbaikan tap kartu: catat kunjungan otomatis, tampilkan hasil tap di profil kartu publik & profil member | ✅ Selesai |
 | 2026-10-15 | Tahap 3 lanjutan: Web NFC writer (Studio & Card Page), kemiringan giroskop HP (deviceorientation), tap-to-flip, tema latar & font baru | ✅ Selesai |
+| 2026-10-15 | Gamifikasi: Daily Tap Streak (hari berturut-turut + bonus EXP bertingkat) & Lencana Pencapaian (Badges) | ✅ Selesai |
 
 ## Catatan teknis penting
 - Fungsi `member_card_taps(uuid)` ada di `supabase_patch_v5.sql`. Jika data tap kosong/error, jalankan patch tersebut di Supabase SQL Editor.
 - Patch `supabase_patch_v7_tap_fix.sql` menyediakan fungsi `record_card_tap()` dengan izin anon/authenticated sehingga tap kartu NFC tercatat secara langsung dan bertambah otomatis.
+- Patch `supabase_patch_v8_gamification.sql` menambahkan perhitungan streak harian otomatis dan bonus EXP berjenjang (+50 EXP untuk streak 3 hari, +150 EXP untuk streak 7 hari).
 - Git diinisialisasi di root proyek. Commit pertama: `07a2427`.
 - Dev server berjalan di http://localhost:5173/ (task background).
 
